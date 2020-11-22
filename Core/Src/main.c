@@ -4,7 +4,8 @@
 #define Enable_DFOB
 // #define Enable_D_Controller_av
 #define Enable_Vehicle_Velocity_control
-#define Enable_Driving_force_FB
+// #define Enable_Driving_force_FB
+// #define Enable_Driving_Force_Control
 // #define Enable_Identification
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +36,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-// #include "tsprintf.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -152,7 +152,7 @@ float dtheta2_res_pre = 0.0;
 float dtheta3_res_pre = 0.0;
 float dtheta4_res_pre = 0.0;
 
-float G_LPF = 100.0;// [rad/sec] : Up to half of sampling frequency 200.0
+#define G_LPF 20.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0
 
 float dtheta1_res_raw = 0.0;// [rad/sec]
 float dtheta2_res_raw = 0.0;
@@ -275,17 +275,30 @@ const float D3_minus = 0.0027;
 const float D4_plus  =  -0.0005;
 const float D4_minus = -0.000004;
 
-const float F1_plus  =  0.0324;// Coulomb friction torque [Nm]
-const float F1_minus = -0.0312;
+// const float F1_plus  =  0.0324;// Coulomb friction torque [Nm]
+// const float F1_minus = -0.0312;
 
-const float F2_plus  =  0.0385;
-const float F2_minus = -0.0357;
+// const float F2_plus  =  0.0385;
+// const float F2_minus = -0.0357;
 
-const float F3_plus  =  0.0352;
-const float F3_minus = -0.0355;
+// const float F3_plus  =  0.0352;
+// const float F3_minus = -0.0355;
 
-const float F4_plus  =  0.0582;
-const float F4_minus = -0.0525;
+// const float F4_plus  =  0.0582;
+// const float F4_minus = -0.0525;
+
+
+const float F1_plus  =  0.0;// Coulomb friction torque [Nm]
+const float F1_minus = 0.0;
+
+const float F2_plus  =  0.0;
+const float F2_minus = 0.0;
+
+const float F3_plus  =  0.0;
+const float F3_minus = 0.0;
+
+const float F4_plus  =  0.0;
+const float F4_minus = 0.0;
 
 // const float F1_plus  =  0.0158;// Coulomb friction torque [Nm]
 // const float F1_minus = -0.0163;
@@ -330,7 +343,8 @@ const float M44 = a + b + Gear * Gear * J4;
 
 
 // * Control Gains etc.
-#define Kp_av 100.0// Gain for angular velocity control 100.0
+#define Kp_av 10.0f//100.0// Gain for angular velocity control 100.0, When Driving Force Control, 10.0
+#define Kp_av_4 30.0f
 float Kd_av = 2.0 * sqrt(Kp_av);
 float G_LPF_D_av = 5.0;// D controller of angular velocity control
 
@@ -353,13 +367,43 @@ float delta_dtheta2_pre = 0.0;
 float delta_dtheta3_pre = 0.0;
 float delta_dtheta4_pre = 0.0;
 
-float Kp_vv_x   = 100.0;// Gain for vehicle velocity control(Based on encoder) 10.0
-float Kp_vv_y   = 100.0;
-float Kp_vv_phi = 10.0;
+float Kp_vv_x   = 5.0;// Gain for vehicle velocity control(Based on encoder) 10.0
+float Kp_vv_y   = 5.0;
+float Kp_vv_phi = 5.0;
 
 float ddx_ref = 0.0;
 float ddy_ref = 0.0;
 float ddphi_ref = 0.0;
+
+#define Kp_df_x 100.0f//0.1f 0.5 10.0 50.0
+#define Kp_df_y 100.0f//0.1f 0.5
+#define Kp_df_phi 10000.0f//0.1f 5.0 100.0(1115-36)
+
+#define Kp_df 1.2f//0.2f
+#define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
+float fx_ref = 0.0;
+float fy_ref = 0.0;
+float Mz_ref = 0.0;
+
+float fd1_ref = 0.0;
+float fd2_ref = 0.0;
+float fd3_ref = 0.0;
+float fd4_ref = 0.0;
+
+float Ki_df_integral1 = 0.0;
+float Ki_df_integral2 = 0.0;
+float Ki_df_integral3 = 0.0;
+float Ki_df_integral4 = 0.0;
+
+// Made a mistake
+// float vx_ref_new = 0.0;
+// float vy_ref_new = 0.0;
+// float dphi_ref_new = 0.0;
+
+float vel1_ref_new = 0.0; 
+float vel2_ref_new = 0.0; 
+float vel3_ref_new = 0.0; 
+float vel4_ref_new = 0.0; 
 // * Control Gains etc.
 
 
@@ -393,7 +437,7 @@ float i4_comp = 0.0;
 
 
 // * DFOB
-#define G_DFOB 30.0f // [rad/sec] 50.0
+#define G_DFOB 20.0f // [rad/sec] 50.0 30.0
 float tau_dfob1 = 0.0;
 float tau_dfob2 = 0.0;
 float tau_dfob3 = 0.0;
@@ -423,14 +467,17 @@ float fd_hat1 = 0.0;
 float fd_hat2 = 0.0;
 float fd_hat3 = 0.0;
 float fd_hat4 = 0.0;
+
+float fx_hat = 0.0;
+float fy_hat = 0.0;
+float Mz_hat = 0.0;
 // * DFOB
 
 
 // * Save variables in SRAM
-// const uint8_t N_SRAM = 3000;// Sampling Number of variables in SRAM
-#define N_SRAM 1400 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 2500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 
-uint16_t i_save = 0;  // For "for sentences"
+int i_save = 0;  // For "for sentences"
 int i_output = 0;// For displaying datas after experiment
 
 float t_SRAM[N_SRAM] = {};
@@ -465,38 +512,48 @@ uint16_t PWM2_SRAM[N_SRAM] = {};
 uint16_t PWM3_SRAM[N_SRAM] = {};
 uint16_t PWM4_SRAM[N_SRAM] = {};
 
-float tau_dis1_raw_SRAM[N_SRAM] = {};
-float tau_dis2_raw_SRAM[N_SRAM] = {};
-float tau_dis3_raw_SRAM[N_SRAM] = {};
-float tau_dis4_raw_SRAM[N_SRAM] = {};
+// float tau_dis1_raw_SRAM[N_SRAM] = {};
+// float tau_dis2_raw_SRAM[N_SRAM] = {};
+// float tau_dis3_raw_SRAM[N_SRAM] = {};
+// float tau_dis4_raw_SRAM[N_SRAM] = {};
+
+float fd1_ref_SRAM[N_SRAM] = {};
+float fd2_ref_SRAM[N_SRAM] = {};
+float fd3_ref_SRAM[N_SRAM] = {};
+float fd4_ref_SRAM[N_SRAM] = {};
+
+float Ki_df_integral1_SRAM[N_SRAM] = {};
+float Ki_df_integral2_SRAM[N_SRAM] = {};
+float Ki_df_integral3_SRAM[N_SRAM] = {};
+float Ki_df_integral4_SRAM[N_SRAM] = {};
 
 float tau_dob1_SRAM[N_SRAM] = {};
 float tau_dob2_SRAM[N_SRAM] = {};
 float tau_dob3_SRAM[N_SRAM] = {};
 float tau_dob4_SRAM[N_SRAM] = {};
 
-float i1_comp_SRAM[N_SRAM] = {};
-float i2_comp_SRAM[N_SRAM] = {};
-float i3_comp_SRAM[N_SRAM] = {};
-float i4_comp_SRAM[N_SRAM] = {};
+// float i1_comp_SRAM[N_SRAM] = {};
+// float i2_comp_SRAM[N_SRAM] = {};
+// float i3_comp_SRAM[N_SRAM] = {};
+// float i4_comp_SRAM[N_SRAM] = {};
 
 float tau_dfob1_SRAM[N_SRAM] = {};
 float tau_dfob2_SRAM[N_SRAM] = {};
 float tau_dfob3_SRAM[N_SRAM] = {};
 float tau_dfob4_SRAM[N_SRAM] = {};
 
-float fd_hat1_SRAM[N_SRAM] = {};
-float fd_hat2_SRAM[N_SRAM] = {};
-float fd_hat3_SRAM[N_SRAM] = {};
-float fd_hat4_SRAM[N_SRAM] = {};
+// float fd_hat1_SRAM[N_SRAM] = {};
+// float fd_hat2_SRAM[N_SRAM] = {};
+// float fd_hat3_SRAM[N_SRAM] = {};
+// float fd_hat4_SRAM[N_SRAM] = {};
 
-float vx_res_SRAM[N_SRAM] = {};
-float vy_res_SRAM[N_SRAM] = {};
-float dphi_res_SRAM[N_SRAM] = {};
+// float vx_res_SRAM[N_SRAM] = {};
+// float vy_res_SRAM[N_SRAM] = {};
+// float dphi_res_SRAM[N_SRAM] = {};
 
-float x_res_SRAM[N_SRAM] = {};
-float y_res_SRAM[N_SRAM] = {};
-float phi_res_SRAM[N_SRAM] = {};
+// float x_res_SRAM[N_SRAM] = {};
+// float y_res_SRAM[N_SRAM] = {};
+// float phi_res_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 
@@ -505,14 +562,6 @@ FILE *outputfile;
 // * fprintf
 
 
-char tdata[5]="0";
-
-char txbuf[1] = "0";
-char txbuf2[1] = "0";
-
-//uint8_t *a[2]={};
-//*a[0]=10;
-//*a[1]=11;
 
 /* USER CODE END PV */
 
@@ -591,10 +640,118 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         direc3 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8);
         direc4 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim4);
 
+        #ifdef Enable_Driving_Force_Control
+        if(t < 25.0){
+        vy_cmd = 0.3;// 0.4
+        // vx_cmd = 0.3;
+        // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
+        }else if(t >= 25.0){
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
+
+        fx_ref = Mass * ddx_ref;
+        fy_ref = Mass * ddy_ref;
+        Mz_ref = Jz * ddphi_ref;
+
+        // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
+        fd1_ref = 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
+        fd2_ref = 1.0 / 4.0 * ( - fx_ref + fy_ref - ( L + W ) * Mz_ref );
+        fd3_ref = 1.0 / 4.0 * (   fx_ref + fy_ref + ( L + W ) * Mz_ref );
+        fd4_ref = 1.0 / 4.0 * ( - fx_ref + fy_ref + ( L + W ) * Mz_ref );
+
+        // * I
+        // Ki_df_integral1 += Ki_df * dt * ( fd1_ref - fd_hat1 );
+        // Ki_df_integral2 += Ki_df * dt * ( fd2_ref - fd_hat2 );
+        // Ki_df_integral3 += Ki_df * dt * ( fd3_ref - fd_hat3 );
+        // Ki_df_integral4 += Ki_df * dt * ( fd4_ref - fd_hat4 );
+
+        Ki_df_integral1 = Ki_df_integral1 + Ki_df * dt * ( fd1_ref - fd_hat1 );
+        Ki_df_integral2 = Ki_df_integral2 + Ki_df * dt * ( fd2_ref - fd_hat2 );
+        Ki_df_integral3 = Ki_df_integral3 + Ki_df * dt * ( fd3_ref - fd_hat3 );
+        Ki_df_integral4 = Ki_df_integral4 + Ki_df * dt * ( fd4_ref - fd_hat4 );
+
+        // * P / PI
+        // vel1_ref_new = Kp_df * ( fd1_ref - fd_hat1 ) + Ki_df_integral1;
+        // vel2_ref_new = Kp_df * ( fd2_ref - fd_hat2 ) + Ki_df_integral2;
+        // vel3_ref_new = Kp_df * ( fd3_ref - fd_hat3 ) + Ki_df_integral3;
+        // vel4_ref_new = Kp_df * ( fd4_ref - fd_hat4 ) + Ki_df_integral4;
+
+        // * I
+        vel1_ref_new = Ki_df_integral1;
+        vel2_ref_new = Ki_df_integral2;
+        vel3_ref_new = Ki_df_integral3;
+        vel4_ref_new = Ki_df_integral4;
+
+        dtheta1_cmd = vel1_ref_new / Rw;
+        dtheta2_cmd = vel2_ref_new / Rw;
+        dtheta3_cmd = vel3_ref_new / Rw;
+        dtheta4_cmd = vel4_ref_new / Rw;
+        #endif
+
+        #ifdef Enable_Driving_force_FB
+        if( t < 3.0 ){
+          fd_hat1 = 0.0;
+          fd_hat2 = 0.0;
+          fd_hat3 = 0.0;
+          fd_hat4 = 0.0;
+        }else if(t >= 3.0 && t < 10.0){
+          vy_cmd = 0.5;// [m/sec]
+          // vx_cmd = 0.5;
+        }else if(t >= 10.0){
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
+
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
+
+        fx_ref = Mass * ddx_ref;
+        fy_ref = Mass * ddy_ref;
+        Mz_ref = Jz * ddphi_ref;
+
+        fd1_ref =   fx_ref + fy_ref - ( L + W ) * Mz_ref;// Cancel Rw term
+        fd2_ref = - fx_ref + fy_ref - ( L + W ) * Mz_ref;
+        fd3_ref =   fx_ref + fy_ref + ( L + W ) * Mz_ref;
+        fd4_ref = - fx_ref + fy_ref + ( L + W ) * Mz_ref;
+
+        fd1_ref = 0.0;
+        fd2_ref = 0.0;
+        fd3_ref = 0.0;
+        fd4_ref = 0.0;
+
+        Ki_df_integral1 += Ki_df * dt * ( fd1_ref - fd_hat1 );
+        Ki_df_integral2 += Ki_df * dt * ( fd2_ref - fd_hat2 );
+        Ki_df_integral3 += Ki_df * dt * ( fd3_ref - fd_hat3 );
+        Ki_df_integral4 += Ki_df * dt * ( fd4_ref - fd_hat4 );
+
+        ddtheta1_ref = Kp_df * ( fd1_ref - fd_hat1 ) + Ki_df_integral1;
+        ddtheta2_ref = Kp_df * ( fd2_ref - fd_hat2 ) + Ki_df_integral2;
+        ddtheta3_ref = Kp_df * ( fd3_ref - fd_hat3 ) + Ki_df_integral3;
+        ddtheta4_ref = Kp_df * ( fd4_ref - fd_hat4 ) + Ki_df_integral4;
+        #endif
+
         #ifdef Enable_Vehicle_Velocity_control
-        if(t > 3.0){
-//          vy_cmd = -0.3;// [m/sec]
-           vx_cmd = 0.5;
+        if(t < 25.0){
+          vx_cmd = -0.3;
+          // vy_cmd = 0.3;// [m/sec]
+          // dphi_cmd = pi / 3.0;// [rad/sec]
+
+        // if(t > 3.0){
+        // if(t > 3.0 && t < 10.0){
+          // dphi_cmd = pi / 6.0;// [rad/sec]
+          // vx_cmd = 0.5;
+        // }else if(t >= 10.0){
+        }else if(t >= 25.0){
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
         }
 
         ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);
@@ -613,19 +770,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Convert Local to Joint space
         // Jacobi T matirix (including "Rw")
 
-        if(t > 3.0){
-          vy_cmd = -0.3;// [m/sec]
-        }
+        // if(t > 3.0){
+        //   vy_cmd = -0.3;// [m/sec]
+        // }
 
-        dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
-        dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
-        dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
-        dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
+        // dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
+        // dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
+        // dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
+        // dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
         ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
         ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
         ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
         ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
+        // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
         #endif
 
         i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
@@ -791,6 +949,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         fd_hat2 = tau_dfob2 / Rw;
         fd_hat3 = tau_dfob3 / Rw;
         fd_hat4 = tau_dfob4 / Rw;
+
+        fx_hat = 1.0 / Rw             * (   tau_dfob1 - tau_dfob2 + tau_dfob3 - tau_dfob4 );
+        fy_hat = 1.0 / Rw             * (   tau_dfob1 + tau_dfob2 + tau_dfob3 + tau_dfob4 );
+        Mz_hat = 1.0 / Rw * ( L + W ) * ( - tau_dfob1 - tau_dfob2 + tau_dfob3 + tau_dfob4 );
+
         #endif
 
         ia1_ref = i1_ref + i1_comp;
@@ -932,20 +1095,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           PWM3_SRAM[i_save] = PWM3;
           PWM4_SRAM[i_save] = PWM4;
 
-          tau_dis1_raw_SRAM[i_save] = tau_dis1_raw;
-          tau_dis2_raw_SRAM[i_save] = tau_dis2_raw;
-          tau_dis3_raw_SRAM[i_save] = tau_dis3_raw;
-          tau_dis4_raw_SRAM[i_save] = tau_dis4_raw;
+          // tau_dis1_raw_SRAM[i_save] = tau_dis1_raw;
+          // tau_dis2_raw_SRAM[i_save] = tau_dis2_raw;
+          // tau_dis3_raw_SRAM[i_save] = tau_dis3_raw;
+          // tau_dis4_raw_SRAM[i_save] = tau_dis4_raw;
+
+          fd1_ref_SRAM[i_save] = fd1_ref;
+          fd2_ref_SRAM[i_save] = fd2_ref;
+          fd3_ref_SRAM[i_save] = fd3_ref;
+          fd4_ref_SRAM[i_save] = fd4_ref;
+
+          Ki_df_integral1_SRAM[i_save] = Ki_df_integral1;
+          Ki_df_integral2_SRAM[i_save] = Ki_df_integral2;
+          Ki_df_integral3_SRAM[i_save] = Ki_df_integral3;
+          Ki_df_integral4_SRAM[i_save] = Ki_df_integral4;
 
           tau_dob1_SRAM[i_save] = tau_dob1;
           tau_dob2_SRAM[i_save] = tau_dob2;
           tau_dob3_SRAM[i_save] = tau_dob3;
           tau_dob4_SRAM[i_save] = tau_dob4;
 
-          i1_comp_SRAM[i_save] = i1_comp;
-          i2_comp_SRAM[i_save] = i2_comp;
-          i3_comp_SRAM[i_save] = i3_comp;
-          i4_comp_SRAM[i_save] = i4_comp;
+          // i1_comp_SRAM[i_save] = i1_comp;
+          // i2_comp_SRAM[i_save] = i2_comp;
+          // i3_comp_SRAM[i_save] = i3_comp;
+          // i4_comp_SRAM[i_save] = i4_comp;
 
           tau_dfob1_SRAM[i_save] = tau_dfob1;
           tau_dfob2_SRAM[i_save] = tau_dfob2;
@@ -1074,11 +1247,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%d, ", PWM3_SRAM[i_output]);
           printf("%d, ", PWM4_SRAM[i_output]);
 
-          printf("%f, ", tau_dis1_raw_SRAM[i_output]);
-          printf("%f, ", tau_dis2_raw_SRAM[i_output]);
-          printf("%f, ", tau_dis3_raw_SRAM[i_output]);
-          printf("%f, ", tau_dis4_raw_SRAM[i_output]);
+          // printf("%f, ", tau_dis1_raw_SRAM[i_output]);
+          // printf("%f, ", tau_dis2_raw_SRAM[i_output]);
+          // printf("%f, ", tau_dis3_raw_SRAM[i_output]);
+          // printf("%f, ", tau_dis4_raw_SRAM[i_output]);
 
+          printf("%f, ", fd1_ref_SRAM[i_output]);
+          printf("%f, ", fd2_ref_SRAM[i_output]);
+          printf("%f, ", fd3_ref_SRAM[i_output]);
+          printf("%f, ", fd4_ref_SRAM[i_output]);
+          
+          printf("%f, ", Ki_df_integral1_SRAM[i_output]);
+          printf("%f, ", Ki_df_integral2_SRAM[i_output]);
+          printf("%f, ", Ki_df_integral3_SRAM[i_output]);
+          printf("%f, ", Ki_df_integral4_SRAM[i_output]);
+          
           printf("%f, ", tau_dob1_SRAM[i_output]);
           printf("%f, ", tau_dob2_SRAM[i_output]);
           printf("%f, ", tau_dob3_SRAM[i_output]);
