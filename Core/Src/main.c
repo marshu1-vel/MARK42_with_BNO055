@@ -1,11 +1,11 @@
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #define angular_velocity_control
+ #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_D_Controller_av
-#define Enable_Vehicle_Velocity_control
+//#define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-// #define Enable_Driving_Force_Control
+ #define Enable_Driving_Force_Control
 // #define Enable_Identification
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -642,8 +642,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Driving_Force_Control
         if(t < 25.0){
-        vy_cmd = 0.3;// 0.4
-        // vx_cmd = 0.3;
+//        vy_cmd = 0.3;// 0.4
+         vx_cmd = 0.3;
         // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
         }else if(t >= 25.0){
           vx_cmd = 0.0;
@@ -739,8 +739,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Vehicle_Velocity_control
         if(t < 25.0){
-          // vx_cmd = 0.3;
-          vy_cmd = 0.3;// [m/sec]
+           vx_cmd = 0.3;
+//          vy_cmd = 0.3;// [m/sec]
           // dphi_cmd = pi / 3.0;// [rad/sec]
 
         // if(t > 3.0){
