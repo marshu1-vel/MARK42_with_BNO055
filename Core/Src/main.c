@@ -739,8 +739,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Vehicle_Velocity_control
         if(t < 25.0){
-          vx_cmd = 0.3;
-          // vy_cmd = -0.3;// [m/sec]
+          // vx_cmd = 0.3;
+          vy_cmd = 0.3;// [m/sec]
           // dphi_cmd = pi / 3.0;// [rad/sec]
 
         // if(t > 3.0){
