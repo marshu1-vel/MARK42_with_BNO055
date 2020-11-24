@@ -1177,7 +1177,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000dee:	eef4 7ac7 	vcmpe.f32	s15, s14
  8000df2:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8000df6:	d53f      	bpl.n	8000e78 <HAL_TIM_PeriodElapsedCallback+0x860>
-         vx_cmd = 0.3;
+        vy_cmd = -0.3;// 0.4
  8000df8:	4b1d      	ldr	r3, [pc, #116]	; (8000e70 <HAL_TIM_PeriodElapsedCallback+0x858>)
  8000dfa:	4a1e      	ldr	r2, [pc, #120]	; (8000e74 <HAL_TIM_PeriodElapsedCallback+0x85c>)
  8000dfc:	601a      	str	r2, [r3, #0]
@@ -1210,8 +1210,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000e64:	2005f774 	.word	0x2005f774
  8000e68:	20000223 	.word	0x20000223
  8000e6c:	20000204 	.word	0x20000204
- 8000e70:	200002cc 	.word	0x200002cc
- 8000e74:	3e99999a 	.word	0x3e99999a
+ 8000e70:	200002d0 	.word	0x200002d0
+ 8000e74:	be99999a 	.word	0xbe99999a
         }else if(t >= 25.0){
  8000e78:	4bce      	ldr	r3, [pc, #824]	; (80011b4 <HAL_TIM_PeriodElapsedCallback+0xb9c>)
  8000e7a:	edd3 7a00 	vldr	s15, [r3]
