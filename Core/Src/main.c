@@ -1,15 +1,14 @@
+/* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- #define angular_velocity_control
+#define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_D_Controller_av
-//#define Enable_Vehicle_Velocity_control
+//  #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
- #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control
 // #define Enable_Identification
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -221,7 +220,7 @@ float phi_res = 1.570796326794895;// [rad]
 // const float Ktn = 0.0134;// [Nm/A]
 #define Ktn 0.0134f // [Nm/A]
 #define i_max 1.4f // [A] : This is set in ESCON Studio 0.15
-#define PWM_rsl 1000.0f // PWM resolution : This is set in STM32CubeIDE
+#define PWM_rsl 4000.0f // PWM resolution : This is set in STM32CubeIDE
 #define a  Mass * Rw * Rw / 8.0f
 #define b  Jz * Rw * Rw/(16.0*(L+W)*(L+W))
 #define J1 5.7 / 10000000.0f
@@ -642,8 +641,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Driving_Force_Control
         if(t < 25.0){
-        vy_cmd = -0.3;// 0.4
-//         vx_cmd = 0.3;
+        vy_cmd = 0.3;// 0.4
+        // vx_cmd = 0.3;
         // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
         }else if(t >= 25.0){
           vx_cmd = 0.0;
@@ -1633,9 +1632,9 @@ static void MX_TIM5_Init(void)
 
   /* USER CODE END TIM5_Init 1 */
   htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 40-1;
+  htim5.Init.Prescaler = 1-1;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 1000-1;
+  htim5.Init.Period = 4000-1;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
@@ -1746,9 +1745,9 @@ static void MX_TIM9_Init(void)
 
   /* USER CODE END TIM9_Init 1 */
   htim9.Instance = TIM9;
-  htim9.Init.Prescaler = 40-1;
+  htim9.Init.Prescaler = 1-1;
   htim9.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim9.Init.Period = 1000-1;
+  htim9.Init.Period = 4000-1;
   htim9.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim9.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim9) != HAL_OK)
