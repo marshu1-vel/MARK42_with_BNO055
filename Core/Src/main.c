@@ -1,13 +1,13 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #define angular_velocity_control
+#define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_D_Controller_av
- #define Enable_Vehicle_Velocity_control
+//  #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
-// #define Enable_Identification
+#define Enable_Identification
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
   ******************************************************************************
@@ -343,7 +343,7 @@ const float M44 = a + b + Gear * Gear * J4;
 
 // * Control Gains etc.
 #define Kp_av 10.0f//100.0// Gain for angular velocity control 100.0, When Driving Force Control, 10.0
-#define Kp_av_4 30.0f
+#define Kp_av_4 5.0f
 float Kd_av = 2.0 * sqrt(Kp_av);
 float G_LPF_D_av = 5.0;// D controller of angular velocity control
 
@@ -474,7 +474,7 @@ float Mz_hat = 0.0;
 
 
 // * Save variables in SRAM
-#define N_SRAM 2500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 
 int i_save = 0;  // For "for sentences"
 int i_output = 0;// For displaying datas after experiment
@@ -764,8 +764,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef angular_velocity_control
-    //		printf("avc");
-    //		printf("\r\n");
         // Convert Local to Joint space
         // Jacobi T matirix (including "Rw")
 
@@ -773,10 +771,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   vy_cmd = -0.3;// [m/sec]
         // }
 
-        // dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
-        // dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
-        // dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
-        // dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
+        // vx_cmd = 0.0;
+        vy_cmd = 0.5;
+        // dphi_cmd = 0.0;
+
+        dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
+        dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
+        dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
+        dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
         ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
         ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
@@ -974,12 +976,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         PWM3 = (90.0 - 50.0)/100.0*PWM_rsl / i_max * ia3_ref + PWM_rsl * 0.5;
         PWM4 = (90.0 - 50.0)/100.0*PWM_rsl / i_max * ia4_ref + PWM_rsl * 0.5;
 
-    //		PWM_constant = 800;
-    //
-    //		PWM1 = PWM_constant;
-    //		PWM2 = PWM_constant;
-    //		PWM3 = PWM_constant;
-    //		PWM4 = PWM_constant;
+    		// PWM_constant = 0.1* PWM_rsl;
+    
+    		// PWM1 = PWM_constant;
+    		// PWM2 = PWM_constant;
+    		// PWM3 = PWM_constant;
+    		// PWM4 = PWM_constant;
 
         __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_1, PWM1);
         __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_4, PWM2);
@@ -1193,13 +1195,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
         // printf("2, %d, ", mode);
         // printf("\r\n");
 
-      // if( (outputfile = fopen("C:\\Users\\TATSUMI\\STM32CubeIDE\\workspace_1.4.0\\1109_4.txt", "w")) == NULL ){
-      //   printf("fail \r\n");
-      //   exit(1);
-      // }
-      // outputfile = fopen("C:\\Users\\TATSUMI\\STM32CubeIDE\\workspace_1.4.0\\1109_4.txt", "w");
-      // fprintf(outputfile, "abc");
-      // fclose(outputfile);
+        // outputfile = fopen("C:\\Users\\TATSUMI\\STM32CubeIDE\\workspace_1.4.0\\1128_4.txt", "w+");
+
+        // if( outputfile == NULL ){
+        //   printf("fail \r\n");
+        //   exit(1);
+        // }
+        // outputfile = fopen("C:\\Users\\TATSUMI\\STM32CubeIDE\\workspace_1.4.0\\1109_4.txt", "w");
+        // fprintf(outputfile, "abc");
+        // fclose(outputfile);
 
         PWM1 = 0.5*PWM_rsl;// Stop motor
         PWM2 = 0.5*PWM_rsl;
