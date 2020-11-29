@@ -1,10 +1,10 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define angular_velocity_control
+// #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_D_Controller_av
-//  #define Enable_Vehicle_Velocity_control
+#define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
 #define Enable_Identification
@@ -737,21 +737,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef Enable_Vehicle_Velocity_control
-        if(t < 25.0){
-           vx_cmd = 0.3;
-//          vy_cmd = 0.3;// [m/sec]
-          // dphi_cmd = pi / 3.0;// [rad/sec]
+        // if(t < 25.0){
+        //   vx_cmd = 0.3;
+        //   vy_cmd = 0.3;// [m/sec]
+        //   dphi_cmd = pi / 3.0;// [rad/sec]
 
         // if(t > 3.0){
         // if(t > 3.0 && t < 10.0){
-          // dphi_cmd = pi / 6.0;// [rad/sec]
-          // vx_cmd = 0.5;
+        //   dphi_cmd = pi / 6.0;// [rad/sec]
+        //   vx_cmd = 0.5;
         // }else if(t >= 10.0){
-        }else if(t >= 25.0){
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // }else if(t >= 25.0){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
+
+        vy_cmd = 0.5;
 
         ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);
         ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);
@@ -780,9 +782,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
         dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
-        ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
-        ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
-        ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
+        // ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
+        // ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
+        // ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
         ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
         // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
         #endif
