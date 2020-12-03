@@ -1,10 +1,10 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #define angular_velocity_control
+#define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_D_Controller_av
-#define Enable_Vehicle_Velocity_control
+// #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
 #define Enable_Identification
@@ -342,7 +342,8 @@ const float M44 = a + b + Gear * Gear * J4;
 
 
 // * Control Gains etc.
-#define Kp_av 10.0f//100.0// Gain for angular velocity control 100.0, When Driving Force Control, 10.0
+#define Kp_av    20.0f// Gain for angular velocity control 100.0
+#define Kp_av_df 10.0f// Gain for Driving Force    control 10.0
 #define Kp_av_4 5.0f
 float Kd_av = 2.0 * sqrt(Kp_av);
 float G_LPF_D_av = 5.0;// D controller of angular velocity control
@@ -782,11 +783,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
         dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
-        // ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
-        // ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
-        // ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
+        ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
+        ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
+        ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
         ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
         // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
+        #endif
+
+        #ifdef Enable_Driving_Force_Control
+        ddtheta1_ref = Kp_av_df * (dtheta1_cmd - dtheta1_res);
+        ddtheta2_ref = Kp_av_df * (dtheta2_cmd - dtheta2_res);
+        ddtheta3_ref = Kp_av_df * (dtheta3_cmd - dtheta3_res);
+        ddtheta4_ref = Kp_av_df * (dtheta4_cmd - dtheta4_res);
         #endif
 
         i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
@@ -977,6 +985,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         PWM2 = (90.0 - 50.0)/100.0*PWM_rsl / i_max * ia2_ref + PWM_rsl * 0.5;
         PWM3 = (90.0 - 50.0)/100.0*PWM_rsl / i_max * ia3_ref + PWM_rsl * 0.5;
         PWM4 = (90.0 - 50.0)/100.0*PWM_rsl / i_max * ia4_ref + PWM_rsl * 0.5;
+
+        // if(PWM1 >= PWM_rsl * 0.9){
+        //   PWM1 = PWM_rsl * 0.87;
+        // }
+        // if(PWM2 >= PWM_rsl * 0.9){
+        //   PWM2 = PWM_rsl * 0.87;
+        // }
+        // if(PWM3 >= PWM_rsl * 0.9){
+        //   PWM3 = PWM_rsl * 0.87;
+        // }
+        // if(PWM4 >= PWM_rsl * 0.9){
+        //   PWM4 = PWM_rsl * 0.87;
+        // }
 
     		// PWM_constant = 0.1* PWM_rsl;
     
