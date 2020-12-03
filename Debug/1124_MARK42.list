@@ -1170,129 +1170,129 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000dde:	b25a      	sxtb	r2, r3
  8000de0:	4b7d      	ldr	r3, [pc, #500]	; (8000fd8 <HAL_TIM_PeriodElapsedCallback+0x9c0>)
  8000de2:	701a      	strb	r2, [r3, #0]
-        vy_cmd = 0.5;
+        vy_cmd = 0.3;
  8000de4:	4b7d      	ldr	r3, [pc, #500]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000de6:	f04f 527c 	mov.w	r2, #1056964608	; 0x3f000000
- 8000dea:	601a      	str	r2, [r3, #0]
+ 8000de6:	4a7e      	ldr	r2, [pc, #504]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
+ 8000de8:	601a      	str	r2, [r3, #0]
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
- 8000dec:	4b7c      	ldr	r3, [pc, #496]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
- 8000dee:	edd3 7a00 	vldr	s15, [r3]
- 8000df2:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000df6:	eeb3 6b04 	vmov.f64	d6, #52	; 0x41a00000  20.0
- 8000dfa:	ee27 6b06 	vmul.f64	d6, d7, d6
- 8000dfe:	4b77      	ldr	r3, [pc, #476]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000e00:	edd3 7a00 	vldr	s15, [r3]
- 8000e04:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e08:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
- 8000e0c:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000e10:	ee36 6b07 	vadd.f64	d6, d6, d7
- 8000e14:	4b73      	ldr	r3, [pc, #460]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
- 8000e16:	edd3 7a00 	vldr	s15, [r3]
- 8000e1a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e1e:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
- 8000e22:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000e26:	ee36 7b47 	vsub.f64	d7, d6, d7
- 8000e2a:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8000e2e:	4b6e      	ldr	r3, [pc, #440]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
- 8000e30:	edc3 7a00 	vstr	s15, [r3]
+ 8000dea:	4b7e      	ldr	r3, [pc, #504]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
+ 8000dec:	edd3 7a00 	vldr	s15, [r3]
+ 8000df0:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000df4:	eeb3 6b04 	vmov.f64	d6, #52	; 0x41a00000  20.0
+ 8000df8:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 8000dfc:	4b77      	ldr	r3, [pc, #476]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
+ 8000dfe:	edd3 7a00 	vldr	s15, [r3]
+ 8000e02:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e06:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
+ 8000e0a:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000e0e:	ee36 6b07 	vadd.f64	d6, d6, d7
+ 8000e12:	4b75      	ldr	r3, [pc, #468]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
+ 8000e14:	edd3 7a00 	vldr	s15, [r3]
+ 8000e18:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e1c:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
+ 8000e20:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000e24:	ee36 7b47 	vsub.f64	d7, d6, d7
+ 8000e28:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8000e2c:	4b6f      	ldr	r3, [pc, #444]	; (8000fec <HAL_TIM_PeriodElapsedCallback+0x9d4>)
+ 8000e2e:	edc3 7a00 	vstr	s15, [r3]
         dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
- 8000e34:	4b6a      	ldr	r3, [pc, #424]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
- 8000e36:	edd3 7a00 	vldr	s15, [r3]
- 8000e3a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e3e:	eebb 6b04 	vmov.f64	d6, #180	; 0xc1a00000 -20.0
- 8000e42:	ee27 6b06 	vmul.f64	d6, d7, d6
- 8000e46:	4b65      	ldr	r3, [pc, #404]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000e48:	edd3 7a00 	vldr	s15, [r3]
- 8000e4c:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e50:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
- 8000e54:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000e58:	ee36 6b07 	vadd.f64	d6, d6, d7
- 8000e5c:	4b61      	ldr	r3, [pc, #388]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
- 8000e5e:	edd3 7a00 	vldr	s15, [r3]
- 8000e62:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e66:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
- 8000e6a:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000e6e:	ee36 7b47 	vsub.f64	d7, d6, d7
- 8000e72:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8000e76:	4b5d      	ldr	r3, [pc, #372]	; (8000fec <HAL_TIM_PeriodElapsedCallback+0x9d4>)
- 8000e78:	edc3 7a00 	vstr	s15, [r3]
+ 8000e32:	4b6c      	ldr	r3, [pc, #432]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
+ 8000e34:	edd3 7a00 	vldr	s15, [r3]
+ 8000e38:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e3c:	eebb 6b04 	vmov.f64	d6, #180	; 0xc1a00000 -20.0
+ 8000e40:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 8000e44:	4b65      	ldr	r3, [pc, #404]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
+ 8000e46:	edd3 7a00 	vldr	s15, [r3]
+ 8000e4a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e4e:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
+ 8000e52:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000e56:	ee36 6b07 	vadd.f64	d6, d6, d7
+ 8000e5a:	4b63      	ldr	r3, [pc, #396]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
+ 8000e5c:	edd3 7a00 	vldr	s15, [r3]
+ 8000e60:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e64:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
+ 8000e68:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000e6c:	ee36 7b47 	vsub.f64	d7, d6, d7
+ 8000e70:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8000e74:	4b5e      	ldr	r3, [pc, #376]	; (8000ff0 <HAL_TIM_PeriodElapsedCallback+0x9d8>)
+ 8000e76:	edc3 7a00 	vstr	s15, [r3]
         dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
- 8000e7c:	4b58      	ldr	r3, [pc, #352]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
- 8000e7e:	edd3 7a00 	vldr	s15, [r3]
- 8000e82:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e86:	eeb3 6b04 	vmov.f64	d6, #52	; 0x41a00000  20.0
- 8000e8a:	ee27 6b06 	vmul.f64	d6, d7, d6
- 8000e8e:	4b53      	ldr	r3, [pc, #332]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000e90:	edd3 7a00 	vldr	s15, [r3]
- 8000e94:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000e98:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
- 8000e9c:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000ea0:	ee36 6b07 	vadd.f64	d6, d6, d7
- 8000ea4:	4b4f      	ldr	r3, [pc, #316]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
- 8000ea6:	edd3 7a00 	vldr	s15, [r3]
- 8000eaa:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000eae:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
- 8000eb2:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000eb6:	ee36 7b07 	vadd.f64	d7, d6, d7
- 8000eba:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8000ebe:	4b4c      	ldr	r3, [pc, #304]	; (8000ff0 <HAL_TIM_PeriodElapsedCallback+0x9d8>)
- 8000ec0:	edc3 7a00 	vstr	s15, [r3]
+ 8000e7a:	4b5a      	ldr	r3, [pc, #360]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
+ 8000e7c:	edd3 7a00 	vldr	s15, [r3]
+ 8000e80:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e84:	eeb3 6b04 	vmov.f64	d6, #52	; 0x41a00000  20.0
+ 8000e88:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 8000e8c:	4b53      	ldr	r3, [pc, #332]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
+ 8000e8e:	edd3 7a00 	vldr	s15, [r3]
+ 8000e92:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000e96:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
+ 8000e9a:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000e9e:	ee36 6b07 	vadd.f64	d6, d6, d7
+ 8000ea2:	4b51      	ldr	r3, [pc, #324]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
+ 8000ea4:	edd3 7a00 	vldr	s15, [r3]
+ 8000ea8:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000eac:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
+ 8000eb0:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000eb4:	ee36 7b07 	vadd.f64	d7, d6, d7
+ 8000eb8:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8000ebc:	4b4d      	ldr	r3, [pc, #308]	; (8000ff4 <HAL_TIM_PeriodElapsedCallback+0x9dc>)
+ 8000ebe:	edc3 7a00 	vstr	s15, [r3]
         dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
- 8000ec4:	4b46      	ldr	r3, [pc, #280]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
- 8000ec6:	edd3 7a00 	vldr	s15, [r3]
- 8000eca:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000ece:	eebb 6b04 	vmov.f64	d6, #180	; 0xc1a00000 -20.0
- 8000ed2:	ee27 6b06 	vmul.f64	d6, d7, d6
- 8000ed6:	4b41      	ldr	r3, [pc, #260]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000ed8:	edd3 7a00 	vldr	s15, [r3]
- 8000edc:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000ee0:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
- 8000ee4:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000ee8:	ee36 6b07 	vadd.f64	d6, d6, d7
- 8000eec:	4b3d      	ldr	r3, [pc, #244]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
- 8000eee:	edd3 7a00 	vldr	s15, [r3]
- 8000ef2:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8000ef6:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
- 8000efa:	ee27 7b05 	vmul.f64	d7, d7, d5
- 8000efe:	ee36 7b07 	vadd.f64	d7, d6, d7
- 8000f02:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8000f06:	4b3b      	ldr	r3, [pc, #236]	; (8000ff4 <HAL_TIM_PeriodElapsedCallback+0x9dc>)
- 8000f08:	edc3 7a00 	vstr	s15, [r3]
+ 8000ec2:	4b48      	ldr	r3, [pc, #288]	; (8000fe4 <HAL_TIM_PeriodElapsedCallback+0x9cc>)
+ 8000ec4:	edd3 7a00 	vldr	s15, [r3]
+ 8000ec8:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000ecc:	eebb 6b04 	vmov.f64	d6, #180	; 0xc1a00000 -20.0
+ 8000ed0:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 8000ed4:	4b41      	ldr	r3, [pc, #260]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
+ 8000ed6:	edd3 7a00 	vldr	s15, [r3]
+ 8000eda:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000ede:	eeb3 5b04 	vmov.f64	d5, #52	; 0x41a00000  20.0
+ 8000ee2:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000ee6:	ee36 6b07 	vadd.f64	d6, d6, d7
+ 8000eea:	4b3f      	ldr	r3, [pc, #252]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
+ 8000eec:	edd3 7a00 	vldr	s15, [r3]
+ 8000ef0:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8000ef4:	eeb1 5b08 	vmov.f64	d5, #24	; 0x40c00000  6.0
+ 8000ef8:	ee27 7b05 	vmul.f64	d7, d7, d5
+ 8000efc:	ee36 7b07 	vadd.f64	d7, d6, d7
+ 8000f00:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8000f04:	4b3c      	ldr	r3, [pc, #240]	; (8000ff8 <HAL_TIM_PeriodElapsedCallback+0x9e0>)
+ 8000f06:	edc3 7a00 	vstr	s15, [r3]
         ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
- 8000f0c:	4b36      	ldr	r3, [pc, #216]	; (8000fe8 <HAL_TIM_PeriodElapsedCallback+0x9d0>)
- 8000f0e:	ed93 7a00 	vldr	s14, [r3]
- 8000f12:	4b1f      	ldr	r3, [pc, #124]	; (8000f90 <HAL_TIM_PeriodElapsedCallback+0x978>)
- 8000f14:	edd3 7a00 	vldr	s15, [r3]
- 8000f18:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8000f1c:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
- 8000f20:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8000f24:	4b34      	ldr	r3, [pc, #208]	; (8000ff8 <HAL_TIM_PeriodElapsedCallback+0x9e0>)
- 8000f26:	edc3 7a00 	vstr	s15, [r3]
+ 8000f0a:	4b38      	ldr	r3, [pc, #224]	; (8000fec <HAL_TIM_PeriodElapsedCallback+0x9d4>)
+ 8000f0c:	ed93 7a00 	vldr	s14, [r3]
+ 8000f10:	4b1f      	ldr	r3, [pc, #124]	; (8000f90 <HAL_TIM_PeriodElapsedCallback+0x978>)
+ 8000f12:	edd3 7a00 	vldr	s15, [r3]
+ 8000f16:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8000f1a:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
+ 8000f1e:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 8000f22:	4b36      	ldr	r3, [pc, #216]	; (8000ffc <HAL_TIM_PeriodElapsedCallback+0x9e4>)
+ 8000f24:	edc3 7a00 	vstr	s15, [r3]
         ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
- 8000f2a:	4b30      	ldr	r3, [pc, #192]	; (8000fec <HAL_TIM_PeriodElapsedCallback+0x9d4>)
- 8000f2c:	ed93 7a00 	vldr	s14, [r3]
- 8000f30:	4b18      	ldr	r3, [pc, #96]	; (8000f94 <HAL_TIM_PeriodElapsedCallback+0x97c>)
- 8000f32:	edd3 7a00 	vldr	s15, [r3]
- 8000f36:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8000f3a:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
- 8000f3e:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8000f42:	4b2e      	ldr	r3, [pc, #184]	; (8000ffc <HAL_TIM_PeriodElapsedCallback+0x9e4>)
- 8000f44:	edc3 7a00 	vstr	s15, [r3]
+ 8000f28:	4b31      	ldr	r3, [pc, #196]	; (8000ff0 <HAL_TIM_PeriodElapsedCallback+0x9d8>)
+ 8000f2a:	ed93 7a00 	vldr	s14, [r3]
+ 8000f2e:	4b19      	ldr	r3, [pc, #100]	; (8000f94 <HAL_TIM_PeriodElapsedCallback+0x97c>)
+ 8000f30:	edd3 7a00 	vldr	s15, [r3]
+ 8000f34:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8000f38:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
+ 8000f3c:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 8000f40:	4b2f      	ldr	r3, [pc, #188]	; (8001000 <HAL_TIM_PeriodElapsedCallback+0x9e8>)
+ 8000f42:	edc3 7a00 	vstr	s15, [r3]
         ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
- 8000f48:	4b29      	ldr	r3, [pc, #164]	; (8000ff0 <HAL_TIM_PeriodElapsedCallback+0x9d8>)
- 8000f4a:	ed93 7a00 	vldr	s14, [r3]
- 8000f4e:	4b12      	ldr	r3, [pc, #72]	; (8000f98 <HAL_TIM_PeriodElapsedCallback+0x980>)
- 8000f50:	edd3 7a00 	vldr	s15, [r3]
- 8000f54:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8000f58:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
- 8000f5c:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8000f60:	4b27      	ldr	r3, [pc, #156]	; (8001000 <HAL_TIM_PeriodElapsedCallback+0x9e8>)
- 8000f62:	edc3 7a00 	vstr	s15, [r3]
+ 8000f46:	4b2b      	ldr	r3, [pc, #172]	; (8000ff4 <HAL_TIM_PeriodElapsedCallback+0x9dc>)
+ 8000f48:	ed93 7a00 	vldr	s14, [r3]
+ 8000f4c:	4b12      	ldr	r3, [pc, #72]	; (8000f98 <HAL_TIM_PeriodElapsedCallback+0x980>)
+ 8000f4e:	edd3 7a00 	vldr	s15, [r3]
+ 8000f52:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8000f56:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
+ 8000f5a:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 8000f5e:	4b29      	ldr	r3, [pc, #164]	; (8001004 <HAL_TIM_PeriodElapsedCallback+0x9ec>)
+ 8000f60:	edc3 7a00 	vstr	s15, [r3]
         ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
- 8000f66:	4b23      	ldr	r3, [pc, #140]	; (8000ff4 <HAL_TIM_PeriodElapsedCallback+0x9dc>)
- 8000f68:	ed93 7a00 	vldr	s14, [r3]
- 8000f6c:	e04a      	b.n	8001004 <HAL_TIM_PeriodElapsedCallback+0x9ec>
- 8000f6e:	bf00      	nop
+ 8000f64:	4b24      	ldr	r3, [pc, #144]	; (8000ff8 <HAL_TIM_PeriodElapsedCallback+0x9e0>)
+ 8000f66:	ed93 7a00 	vldr	s14, [r3]
+ 8000f6a:	e04d      	b.n	8001008 <HAL_TIM_PeriodElapsedCallback+0x9f0>
+ 8000f6c:	f3af 8000 	nop.w
  8000f70:	00000000 	.word	0x00000000
  8000f74:	40440000 	.word	0x40440000
  8000f78:	4c71c722 	.word	0x4c71c722
@@ -1321,277 +1321,277 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000fd4:	200395ec 	.word	0x200395ec
  8000fd8:	20000223 	.word	0x20000223
  8000fdc:	200002d0 	.word	0x200002d0
- 8000fe0:	200002cc 	.word	0x200002cc
- 8000fe4:	200002d4 	.word	0x200002d4
- 8000fe8:	20000284 	.word	0x20000284
- 8000fec:	20000288 	.word	0x20000288
- 8000ff0:	2000028c 	.word	0x2000028c
- 8000ff4:	20000290 	.word	0x20000290
- 8000ff8:	20000274 	.word	0x20000274
- 8000ffc:	20000278 	.word	0x20000278
- 8001000:	2000027c 	.word	0x2000027c
- 8001004:	4be6      	ldr	r3, [pc, #920]	; (80013a0 <HAL_TIM_PeriodElapsedCallback+0xd88>)
- 8001006:	edd3 7a00 	vldr	s15, [r3]
- 800100a:	ee77 7a67 	vsub.f32	s15, s14, s15
- 800100e:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
- 8001012:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8001016:	4be3      	ldr	r3, [pc, #908]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 8001018:	edc3 7a00 	vstr	s15, [r3]
+ 8000fe0:	3e99999a 	.word	0x3e99999a
+ 8000fe4:	200002cc 	.word	0x200002cc
+ 8000fe8:	200002d4 	.word	0x200002d4
+ 8000fec:	20000284 	.word	0x20000284
+ 8000ff0:	20000288 	.word	0x20000288
+ 8000ff4:	2000028c 	.word	0x2000028c
+ 8000ff8:	20000290 	.word	0x20000290
+ 8000ffc:	20000274 	.word	0x20000274
+ 8001000:	20000278 	.word	0x20000278
+ 8001004:	2000027c 	.word	0x2000027c
+ 8001008:	4be5      	ldr	r3, [pc, #916]	; (80013a0 <HAL_TIM_PeriodElapsedCallback+0xd88>)
+ 800100a:	edd3 7a00 	vldr	s15, [r3]
+ 800100e:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001012:	eeb3 7a04 	vmov.f32	s14, #52	; 0x41a00000  20.0
+ 8001016:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 800101a:	4be2      	ldr	r3, [pc, #904]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 800101c:	edc3 7a00 	vstr	s15, [r3]
         i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
- 800101c:	ed9f 7ae2 	vldr	s14, [pc, #904]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 8001020:	4be2      	ldr	r3, [pc, #904]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
- 8001022:	edd3 7a00 	vldr	s15, [r3]
- 8001026:	ee27 7a27 	vmul.f32	s14, s14, s15
- 800102a:	eddf 6ae1 	vldr	s13, [pc, #900]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
- 800102e:	4be1      	ldr	r3, [pc, #900]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
- 8001030:	edd3 7a00 	vldr	s15, [r3]
- 8001034:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 8001038:	ee37 7a27 	vadd.f32	s14, s14, s15
- 800103c:	eddf 6ade 	vldr	s13, [pc, #888]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
- 8001040:	4bde      	ldr	r3, [pc, #888]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
- 8001042:	edd3 7a00 	vldr	s15, [r3]
- 8001046:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 800104a:	ee37 7a27 	vadd.f32	s14, s14, s15
- 800104e:	eddf 6adc 	vldr	s13, [pc, #880]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
- 8001052:	4bd4      	ldr	r3, [pc, #848]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 8001054:	edd3 7a00 	vldr	s15, [r3]
- 8001058:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 800105c:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001060:	eddf 6ad8 	vldr	s13, [pc, #864]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
- 8001064:	eec7 7a26 	vdiv.f32	s15, s14, s13
- 8001068:	4bd7      	ldr	r3, [pc, #860]	; (80013c8 <HAL_TIM_PeriodElapsedCallback+0xdb0>)
- 800106a:	edc3 7a00 	vstr	s15, [r3]
+ 8001020:	ed9f 7ae1 	vldr	s14, [pc, #900]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 8001024:	4be1      	ldr	r3, [pc, #900]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
+ 8001026:	edd3 7a00 	vldr	s15, [r3]
+ 800102a:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 800102e:	eddf 6ae0 	vldr	s13, [pc, #896]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
+ 8001032:	4be0      	ldr	r3, [pc, #896]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
+ 8001034:	edd3 7a00 	vldr	s15, [r3]
+ 8001038:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 800103c:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001040:	eddf 6add 	vldr	s13, [pc, #884]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
+ 8001044:	4bdd      	ldr	r3, [pc, #884]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
+ 8001046:	edd3 7a00 	vldr	s15, [r3]
+ 800104a:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 800104e:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001052:	eddf 6adb 	vldr	s13, [pc, #876]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
+ 8001056:	4bd3      	ldr	r3, [pc, #844]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 8001058:	edd3 7a00 	vldr	s15, [r3]
+ 800105c:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001060:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001064:	eddf 6ad7 	vldr	s13, [pc, #860]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
+ 8001068:	eec7 7a26 	vdiv.f32	s15, s14, s13
+ 800106c:	4bd6      	ldr	r3, [pc, #856]	; (80013c8 <HAL_TIM_PeriodElapsedCallback+0xdb0>)
+ 800106e:	edc3 7a00 	vstr	s15, [r3]
         i2_ref = (M21*ddtheta1_ref + M22*ddtheta2_ref + M23*ddtheta3_ref + M24*ddtheta4_ref)/( Gear * Ktn );
- 800106e:	ed9f 7ad0 	vldr	s14, [pc, #832]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
- 8001072:	4bce      	ldr	r3, [pc, #824]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
- 8001074:	edd3 7a00 	vldr	s15, [r3]
- 8001078:	ee27 7a27 	vmul.f32	s14, s14, s15
- 800107c:	eddf 6aca 	vldr	s13, [pc, #808]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 8001080:	4bcc      	ldr	r3, [pc, #816]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
- 8001082:	edd3 7a00 	vldr	s15, [r3]
- 8001086:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 800108a:	ee37 7a27 	vadd.f32	s14, s14, s15
- 800108e:	eddf 6acc 	vldr	s13, [pc, #816]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
- 8001092:	4bca      	ldr	r3, [pc, #808]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
- 8001094:	edd3 7a00 	vldr	s15, [r3]
- 8001098:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 800109c:	ee37 7a27 	vadd.f32	s14, s14, s15
- 80010a0:	eddf 6ac5 	vldr	s13, [pc, #788]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
- 80010a4:	4bbf      	ldr	r3, [pc, #764]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 80010a6:	edd3 7a00 	vldr	s15, [r3]
- 80010aa:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 80010ae:	ee37 7a27 	vadd.f32	s14, s14, s15
- 80010b2:	eddf 6ac4 	vldr	s13, [pc, #784]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
- 80010b6:	eec7 7a26 	vdiv.f32	s15, s14, s13
- 80010ba:	4bc4      	ldr	r3, [pc, #784]	; (80013cc <HAL_TIM_PeriodElapsedCallback+0xdb4>)
- 80010bc:	edc3 7a00 	vstr	s15, [r3]
+ 8001072:	ed9f 7acf 	vldr	s14, [pc, #828]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
+ 8001076:	4bcd      	ldr	r3, [pc, #820]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
+ 8001078:	edd3 7a00 	vldr	s15, [r3]
+ 800107c:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 8001080:	eddf 6ac9 	vldr	s13, [pc, #804]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 8001084:	4bcb      	ldr	r3, [pc, #812]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
+ 8001086:	edd3 7a00 	vldr	s15, [r3]
+ 800108a:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 800108e:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001092:	eddf 6acb 	vldr	s13, [pc, #812]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
+ 8001096:	4bc9      	ldr	r3, [pc, #804]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
+ 8001098:	edd3 7a00 	vldr	s15, [r3]
+ 800109c:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 80010a0:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 80010a4:	eddf 6ac4 	vldr	s13, [pc, #784]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
+ 80010a8:	4bbe      	ldr	r3, [pc, #760]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 80010aa:	edd3 7a00 	vldr	s15, [r3]
+ 80010ae:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 80010b2:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 80010b6:	eddf 6ac3 	vldr	s13, [pc, #780]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
+ 80010ba:	eec7 7a26 	vdiv.f32	s15, s14, s13
+ 80010be:	4bc3      	ldr	r3, [pc, #780]	; (80013cc <HAL_TIM_PeriodElapsedCallback+0xdb4>)
+ 80010c0:	edc3 7a00 	vstr	s15, [r3]
         i3_ref = (M31*ddtheta1_ref + M32*ddtheta2_ref + M33*ddtheta3_ref + M34*ddtheta4_ref)/( Gear * Ktn );
- 80010c0:	ed9f 7abd 	vldr	s14, [pc, #756]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
- 80010c4:	4bb9      	ldr	r3, [pc, #740]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
- 80010c6:	edd3 7a00 	vldr	s15, [r3]
- 80010ca:	ee27 7a27 	vmul.f32	s14, s14, s15
- 80010ce:	eddf 6abc 	vldr	s13, [pc, #752]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
- 80010d2:	4bb8      	ldr	r3, [pc, #736]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
- 80010d4:	edd3 7a00 	vldr	s15, [r3]
- 80010d8:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 80010dc:	ee37 7a27 	vadd.f32	s14, s14, s15
- 80010e0:	eddf 6ab1 	vldr	s13, [pc, #708]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 80010e4:	4bb5      	ldr	r3, [pc, #724]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
- 80010e6:	edd3 7a00 	vldr	s15, [r3]
- 80010ea:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 80010ee:	ee37 7a27 	vadd.f32	s14, s14, s15
- 80010f2:	eddf 6aaf 	vldr	s13, [pc, #700]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
- 80010f6:	4bab      	ldr	r3, [pc, #684]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 80010f8:	edd3 7a00 	vldr	s15, [r3]
- 80010fc:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 8001100:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001104:	eddf 6aaf 	vldr	s13, [pc, #700]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
- 8001108:	eec7 7a26 	vdiv.f32	s15, s14, s13
- 800110c:	4bb0      	ldr	r3, [pc, #704]	; (80013d0 <HAL_TIM_PeriodElapsedCallback+0xdb8>)
- 800110e:	edc3 7a00 	vstr	s15, [r3]
+ 80010c4:	ed9f 7abc 	vldr	s14, [pc, #752]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
+ 80010c8:	4bb8      	ldr	r3, [pc, #736]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
+ 80010ca:	edd3 7a00 	vldr	s15, [r3]
+ 80010ce:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 80010d2:	eddf 6abb 	vldr	s13, [pc, #748]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
+ 80010d6:	4bb7      	ldr	r3, [pc, #732]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
+ 80010d8:	edd3 7a00 	vldr	s15, [r3]
+ 80010dc:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 80010e0:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 80010e4:	eddf 6ab0 	vldr	s13, [pc, #704]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 80010e8:	4bb4      	ldr	r3, [pc, #720]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
+ 80010ea:	edd3 7a00 	vldr	s15, [r3]
+ 80010ee:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 80010f2:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 80010f6:	eddf 6aae 	vldr	s13, [pc, #696]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
+ 80010fa:	4baa      	ldr	r3, [pc, #680]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 80010fc:	edd3 7a00 	vldr	s15, [r3]
+ 8001100:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001104:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001108:	eddf 6aae 	vldr	s13, [pc, #696]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
+ 800110c:	eec7 7a26 	vdiv.f32	s15, s14, s13
+ 8001110:	4baf      	ldr	r3, [pc, #700]	; (80013d0 <HAL_TIM_PeriodElapsedCallback+0xdb8>)
+ 8001112:	edc3 7a00 	vstr	s15, [r3]
         i4_ref = (M41*ddtheta1_ref + M42*ddtheta2_ref + M43*ddtheta3_ref + M44*ddtheta4_ref)/( Gear * Ktn );
- 8001112:	ed9f 7aab 	vldr	s14, [pc, #684]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
- 8001116:	4ba5      	ldr	r3, [pc, #660]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
- 8001118:	edd3 7a00 	vldr	s15, [r3]
- 800111c:	ee27 7a27 	vmul.f32	s14, s14, s15
- 8001120:	eddf 6aa5 	vldr	s13, [pc, #660]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
- 8001124:	4ba3      	ldr	r3, [pc, #652]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
- 8001126:	edd3 7a00 	vldr	s15, [r3]
- 800112a:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 800112e:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001132:	eddf 6a9f 	vldr	s13, [pc, #636]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
- 8001136:	4ba1      	ldr	r3, [pc, #644]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
- 8001138:	edd3 7a00 	vldr	s15, [r3]
- 800113c:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 8001140:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001144:	eddf 6a98 	vldr	s13, [pc, #608]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 8001148:	4b96      	ldr	r3, [pc, #600]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 800114a:	edd3 7a00 	vldr	s15, [r3]
- 800114e:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 8001152:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001156:	eddf 6a9b 	vldr	s13, [pc, #620]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
- 800115a:	eec7 7a26 	vdiv.f32	s15, s14, s13
- 800115e:	4b9d      	ldr	r3, [pc, #628]	; (80013d4 <HAL_TIM_PeriodElapsedCallback+0xdbc>)
- 8001160:	edc3 7a00 	vstr	s15, [r3]
+ 8001116:	ed9f 7aaa 	vldr	s14, [pc, #680]	; 80013c0 <HAL_TIM_PeriodElapsedCallback+0xda8>
+ 800111a:	4ba4      	ldr	r3, [pc, #656]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
+ 800111c:	edd3 7a00 	vldr	s15, [r3]
+ 8001120:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 8001124:	eddf 6aa4 	vldr	s13, [pc, #656]	; 80013b8 <HAL_TIM_PeriodElapsedCallback+0xda0>
+ 8001128:	4ba2      	ldr	r3, [pc, #648]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
+ 800112a:	edd3 7a00 	vldr	s15, [r3]
+ 800112e:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001132:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001136:	eddf 6a9e 	vldr	s13, [pc, #632]	; 80013b0 <HAL_TIM_PeriodElapsedCallback+0xd98>
+ 800113a:	4ba0      	ldr	r3, [pc, #640]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
+ 800113c:	edd3 7a00 	vldr	s15, [r3]
+ 8001140:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001144:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001148:	eddf 6a97 	vldr	s13, [pc, #604]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 800114c:	4b95      	ldr	r3, [pc, #596]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 800114e:	edd3 7a00 	vldr	s15, [r3]
+ 8001152:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001156:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 800115a:	eddf 6a9a 	vldr	s13, [pc, #616]	; 80013c4 <HAL_TIM_PeriodElapsedCallback+0xdac>
+ 800115e:	eec7 7a26 	vdiv.f32	s15, s14, s13
+ 8001162:	4b9c      	ldr	r3, [pc, #624]	; (80013d4 <HAL_TIM_PeriodElapsedCallback+0xdbc>)
+ 8001164:	edc3 7a00 	vstr	s15, [r3]
         i1_ref = Gear * Gear * J1 * ddtheta1_ref / ( Gear * Ktn );
- 8001164:	4b91      	ldr	r3, [pc, #580]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
- 8001166:	edd3 7a00 	vldr	s15, [r3]
- 800116a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 800116e:	ed9f 6b88 	vldr	d6, [pc, #544]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
- 8001172:	ee27 6b06 	vmul.f64	d6, d7, d6
- 8001176:	ed9f 5b88 	vldr	d5, [pc, #544]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
- 800117a:	ee86 7b05 	vdiv.f64	d7, d6, d5
- 800117e:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8001182:	4b91      	ldr	r3, [pc, #580]	; (80013c8 <HAL_TIM_PeriodElapsedCallback+0xdb0>)
- 8001184:	edc3 7a00 	vstr	s15, [r3]
+ 8001168:	4b90      	ldr	r3, [pc, #576]	; (80013ac <HAL_TIM_PeriodElapsedCallback+0xd94>)
+ 800116a:	edd3 7a00 	vldr	s15, [r3]
+ 800116e:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8001172:	ed9f 6b87 	vldr	d6, [pc, #540]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
+ 8001176:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 800117a:	ed9f 5b87 	vldr	d5, [pc, #540]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
+ 800117e:	ee86 7b05 	vdiv.f64	d7, d6, d5
+ 8001182:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8001186:	4b90      	ldr	r3, [pc, #576]	; (80013c8 <HAL_TIM_PeriodElapsedCallback+0xdb0>)
+ 8001188:	edc3 7a00 	vstr	s15, [r3]
         i2_ref = Gear * Gear * J2 * ddtheta2_ref / ( Gear * Ktn );
- 8001188:	4b8a      	ldr	r3, [pc, #552]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
- 800118a:	edd3 7a00 	vldr	s15, [r3]
- 800118e:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8001192:	ed9f 6b7f 	vldr	d6, [pc, #508]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
- 8001196:	ee27 6b06 	vmul.f64	d6, d7, d6
- 800119a:	ed9f 5b7f 	vldr	d5, [pc, #508]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
- 800119e:	ee86 7b05 	vdiv.f64	d7, d6, d5
- 80011a2:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 80011a6:	4b89      	ldr	r3, [pc, #548]	; (80013cc <HAL_TIM_PeriodElapsedCallback+0xdb4>)
- 80011a8:	edc3 7a00 	vstr	s15, [r3]
+ 800118c:	4b89      	ldr	r3, [pc, #548]	; (80013b4 <HAL_TIM_PeriodElapsedCallback+0xd9c>)
+ 800118e:	edd3 7a00 	vldr	s15, [r3]
+ 8001192:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8001196:	ed9f 6b7e 	vldr	d6, [pc, #504]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
+ 800119a:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 800119e:	ed9f 5b7e 	vldr	d5, [pc, #504]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
+ 80011a2:	ee86 7b05 	vdiv.f64	d7, d6, d5
+ 80011a6:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 80011aa:	4b88      	ldr	r3, [pc, #544]	; (80013cc <HAL_TIM_PeriodElapsedCallback+0xdb4>)
+ 80011ac:	edc3 7a00 	vstr	s15, [r3]
         i3_ref = Gear * Gear * J3 * ddtheta3_ref / ( Gear * Ktn );
- 80011ac:	4b83      	ldr	r3, [pc, #524]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
- 80011ae:	edd3 7a00 	vldr	s15, [r3]
- 80011b2:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 80011b6:	ed9f 6b76 	vldr	d6, [pc, #472]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
- 80011ba:	ee27 6b06 	vmul.f64	d6, d7, d6
- 80011be:	ed9f 5b76 	vldr	d5, [pc, #472]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
- 80011c2:	ee86 7b05 	vdiv.f64	d7, d6, d5
- 80011c6:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 80011ca:	4b81      	ldr	r3, [pc, #516]	; (80013d0 <HAL_TIM_PeriodElapsedCallback+0xdb8>)
- 80011cc:	edc3 7a00 	vstr	s15, [r3]
+ 80011b0:	4b82      	ldr	r3, [pc, #520]	; (80013bc <HAL_TIM_PeriodElapsedCallback+0xda4>)
+ 80011b2:	edd3 7a00 	vldr	s15, [r3]
+ 80011b6:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 80011ba:	ed9f 6b75 	vldr	d6, [pc, #468]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
+ 80011be:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 80011c2:	ed9f 5b75 	vldr	d5, [pc, #468]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
+ 80011c6:	ee86 7b05 	vdiv.f64	d7, d6, d5
+ 80011ca:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 80011ce:	4b80      	ldr	r3, [pc, #512]	; (80013d0 <HAL_TIM_PeriodElapsedCallback+0xdb8>)
+ 80011d0:	edc3 7a00 	vstr	s15, [r3]
         i4_ref = Gear * Gear * J4 * ddtheta4_ref / ( Gear * Ktn );
- 80011d0:	4b74      	ldr	r3, [pc, #464]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
- 80011d2:	edd3 7a00 	vldr	s15, [r3]
- 80011d6:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 80011da:	ed9f 6b6d 	vldr	d6, [pc, #436]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
- 80011de:	ee27 6b06 	vmul.f64	d6, d7, d6
- 80011e2:	ed9f 5b6d 	vldr	d5, [pc, #436]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
- 80011e6:	ee86 7b05 	vdiv.f64	d7, d6, d5
- 80011ea:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 80011ee:	4b79      	ldr	r3, [pc, #484]	; (80013d4 <HAL_TIM_PeriodElapsedCallback+0xdbc>)
- 80011f0:	edc3 7a00 	vstr	s15, [r3]
+ 80011d4:	4b73      	ldr	r3, [pc, #460]	; (80013a4 <HAL_TIM_PeriodElapsedCallback+0xd8c>)
+ 80011d6:	edd3 7a00 	vldr	s15, [r3]
+ 80011da:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 80011de:	ed9f 6b6c 	vldr	d6, [pc, #432]	; 8001390 <HAL_TIM_PeriodElapsedCallback+0xd78>
+ 80011e2:	ee27 6b06 	vmul.f64	d6, d7, d6
+ 80011e6:	ed9f 5b6c 	vldr	d5, [pc, #432]	; 8001398 <HAL_TIM_PeriodElapsedCallback+0xd80>
+ 80011ea:	ee86 7b05 	vdiv.f64	d7, d6, d5
+ 80011ee:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 80011f2:	4b78      	ldr	r3, [pc, #480]	; (80013d4 <HAL_TIM_PeriodElapsedCallback+0xdbc>)
+ 80011f4:	edc3 7a00 	vstr	s15, [r3]
         tau_dob1 = 1.0 / (1.0 + G_DOB * dt) * ( tau_dob1_pre + G_DOB * dt * Gear * Ktn * ia1_ref - G_DOB * M11 * ( dtheta1_res - dtheta1_res_pre ) );
- 80011f4:	ed9f 7a87 	vldr	s14, [pc, #540]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 80011f8:	eddf 7a87 	vldr	s15, [pc, #540]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 80011fc:	ee67 7a27 	vmul.f32	s15, s14, s15
- 8001200:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8001204:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
- 8001208:	ee37 7b06 	vadd.f64	d7, d7, d6
- 800120c:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
- 8001210:	ee85 6b07 	vdiv.f64	d6, d5, d7
- 8001214:	ed9f 7a7f 	vldr	s14, [pc, #508]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 8001218:	eddf 7a7f 	vldr	s15, [pc, #508]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 800121c:	ee67 7a27 	vmul.f32	s15, s14, s15
- 8001220:	ed9f 7a7e 	vldr	s14, [pc, #504]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
- 8001224:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8001228:	ed9f 7a7d 	vldr	s14, [pc, #500]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
- 800122c:	ee27 7a87 	vmul.f32	s14, s15, s14
- 8001230:	4b69      	ldr	r3, [pc, #420]	; (80013d8 <HAL_TIM_PeriodElapsedCallback+0xdc0>)
- 8001232:	edd3 7a00 	vldr	s15, [r3]
- 8001236:	ee27 7a27 	vmul.f32	s14, s14, s15
- 800123a:	4b68      	ldr	r3, [pc, #416]	; (80013dc <HAL_TIM_PeriodElapsedCallback+0xdc4>)
- 800123c:	edd3 7a00 	vldr	s15, [r3]
- 8001240:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001244:	eddf 5a58 	vldr	s11, [pc, #352]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 8001248:	eddf 7a73 	vldr	s15, [pc, #460]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 800124c:	ee65 5aa7 	vmul.f32	s11, s11, s15
- 8001250:	4b63      	ldr	r3, [pc, #396]	; (80013e0 <HAL_TIM_PeriodElapsedCallback+0xdc8>)
- 8001252:	ed93 5a00 	vldr	s10, [r3]
- 8001256:	4b63      	ldr	r3, [pc, #396]	; (80013e4 <HAL_TIM_PeriodElapsedCallback+0xdcc>)
- 8001258:	edd3 7a00 	vldr	s15, [r3]
- 800125c:	ee75 7a67 	vsub.f32	s15, s10, s15
- 8001260:	ee65 7aa7 	vmul.f32	s15, s11, s15
- 8001264:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001268:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 800126c:	ee26 7b07 	vmul.f64	d7, d6, d7
- 8001270:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8001274:	4b5c      	ldr	r3, [pc, #368]	; (80013e8 <HAL_TIM_PeriodElapsedCallback+0xdd0>)
- 8001276:	edc3 7a00 	vstr	s15, [r3]
+ 80011f8:	ed9f 7a86 	vldr	s14, [pc, #536]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 80011fc:	eddf 7a86 	vldr	s15, [pc, #536]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 8001200:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 8001204:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8001208:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
+ 800120c:	ee37 7b06 	vadd.f64	d7, d7, d6
+ 8001210:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
+ 8001214:	ee85 6b07 	vdiv.f64	d6, d5, d7
+ 8001218:	ed9f 7a7e 	vldr	s14, [pc, #504]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 800121c:	eddf 7a7e 	vldr	s15, [pc, #504]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 8001220:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 8001224:	ed9f 7a7d 	vldr	s14, [pc, #500]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
+ 8001228:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 800122c:	ed9f 7a7c 	vldr	s14, [pc, #496]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
+ 8001230:	ee27 7a87 	vmul.f32	s14, s15, s14
+ 8001234:	4b68      	ldr	r3, [pc, #416]	; (80013d8 <HAL_TIM_PeriodElapsedCallback+0xdc0>)
+ 8001236:	edd3 7a00 	vldr	s15, [r3]
+ 800123a:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 800123e:	4b67      	ldr	r3, [pc, #412]	; (80013dc <HAL_TIM_PeriodElapsedCallback+0xdc4>)
+ 8001240:	edd3 7a00 	vldr	s15, [r3]
+ 8001244:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001248:	eddf 5a57 	vldr	s11, [pc, #348]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 800124c:	eddf 7a72 	vldr	s15, [pc, #456]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 8001250:	ee65 5aa7 	vmul.f32	s11, s11, s15
+ 8001254:	4b62      	ldr	r3, [pc, #392]	; (80013e0 <HAL_TIM_PeriodElapsedCallback+0xdc8>)
+ 8001256:	ed93 5a00 	vldr	s10, [r3]
+ 800125a:	4b62      	ldr	r3, [pc, #392]	; (80013e4 <HAL_TIM_PeriodElapsedCallback+0xdcc>)
+ 800125c:	edd3 7a00 	vldr	s15, [r3]
+ 8001260:	ee75 7a67 	vsub.f32	s15, s10, s15
+ 8001264:	ee65 7aa7 	vmul.f32	s15, s11, s15
+ 8001268:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 800126c:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8001270:	ee26 7b07 	vmul.f64	d7, d6, d7
+ 8001274:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8001278:	4b5b      	ldr	r3, [pc, #364]	; (80013e8 <HAL_TIM_PeriodElapsedCallback+0xdd0>)
+ 800127a:	edc3 7a00 	vstr	s15, [r3]
         tau_dob2 = 1.0 / (1.0 + G_DOB * dt) * ( tau_dob2_pre + G_DOB * dt * Gear * Ktn * ia2_ref - G_DOB * M22 * ( dtheta2_res - dtheta2_res_pre ) );
- 800127a:	ed9f 7a66 	vldr	s14, [pc, #408]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 800127e:	eddf 7a66 	vldr	s15, [pc, #408]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 8001282:	ee67 7a27 	vmul.f32	s15, s14, s15
- 8001286:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 800128a:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
- 800128e:	ee37 7b06 	vadd.f64	d7, d7, d6
- 8001292:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
- 8001296:	ee85 6b07 	vdiv.f64	d6, d5, d7
- 800129a:	ed9f 7a5e 	vldr	s14, [pc, #376]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 800129e:	eddf 7a5e 	vldr	s15, [pc, #376]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 80012a2:	ee67 7a27 	vmul.f32	s15, s14, s15
- 80012a6:	ed9f 7a5d 	vldr	s14, [pc, #372]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
- 80012aa:	ee67 7a87 	vmul.f32	s15, s15, s14
- 80012ae:	ed9f 7a5c 	vldr	s14, [pc, #368]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
- 80012b2:	ee27 7a87 	vmul.f32	s14, s15, s14
- 80012b6:	4b4d      	ldr	r3, [pc, #308]	; (80013ec <HAL_TIM_PeriodElapsedCallback+0xdd4>)
- 80012b8:	edd3 7a00 	vldr	s15, [r3]
- 80012bc:	ee27 7a27 	vmul.f32	s14, s14, s15
- 80012c0:	4b4b      	ldr	r3, [pc, #300]	; (80013f0 <HAL_TIM_PeriodElapsedCallback+0xdd8>)
- 80012c2:	edd3 7a00 	vldr	s15, [r3]
- 80012c6:	ee37 7a27 	vadd.f32	s14, s14, s15
- 80012ca:	eddf 5a37 	vldr	s11, [pc, #220]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 80012ce:	eddf 7a52 	vldr	s15, [pc, #328]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 80012d2:	ee65 5aa7 	vmul.f32	s11, s11, s15
- 80012d6:	4b47      	ldr	r3, [pc, #284]	; (80013f4 <HAL_TIM_PeriodElapsedCallback+0xddc>)
- 80012d8:	ed93 5a00 	vldr	s10, [r3]
- 80012dc:	4b46      	ldr	r3, [pc, #280]	; (80013f8 <HAL_TIM_PeriodElapsedCallback+0xde0>)
- 80012de:	edd3 7a00 	vldr	s15, [r3]
- 80012e2:	ee75 7a67 	vsub.f32	s15, s10, s15
- 80012e6:	ee65 7aa7 	vmul.f32	s15, s11, s15
- 80012ea:	ee77 7a67 	vsub.f32	s15, s14, s15
- 80012ee:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 80012f2:	ee26 7b07 	vmul.f64	d7, d6, d7
- 80012f6:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 80012fa:	4b40      	ldr	r3, [pc, #256]	; (80013fc <HAL_TIM_PeriodElapsedCallback+0xde4>)
- 80012fc:	edc3 7a00 	vstr	s15, [r3]
+ 800127e:	ed9f 7a65 	vldr	s14, [pc, #404]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 8001282:	eddf 7a65 	vldr	s15, [pc, #404]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 8001286:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 800128a:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 800128e:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
+ 8001292:	ee37 7b06 	vadd.f64	d7, d7, d6
+ 8001296:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
+ 800129a:	ee85 6b07 	vdiv.f64	d6, d5, d7
+ 800129e:	ed9f 7a5d 	vldr	s14, [pc, #372]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 80012a2:	eddf 7a5d 	vldr	s15, [pc, #372]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 80012a6:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 80012aa:	ed9f 7a5c 	vldr	s14, [pc, #368]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
+ 80012ae:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 80012b2:	ed9f 7a5b 	vldr	s14, [pc, #364]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
+ 80012b6:	ee27 7a87 	vmul.f32	s14, s15, s14
+ 80012ba:	4b4c      	ldr	r3, [pc, #304]	; (80013ec <HAL_TIM_PeriodElapsedCallback+0xdd4>)
+ 80012bc:	edd3 7a00 	vldr	s15, [r3]
+ 80012c0:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 80012c4:	4b4a      	ldr	r3, [pc, #296]	; (80013f0 <HAL_TIM_PeriodElapsedCallback+0xdd8>)
+ 80012c6:	edd3 7a00 	vldr	s15, [r3]
+ 80012ca:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 80012ce:	eddf 5a36 	vldr	s11, [pc, #216]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 80012d2:	eddf 7a51 	vldr	s15, [pc, #324]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 80012d6:	ee65 5aa7 	vmul.f32	s11, s11, s15
+ 80012da:	4b46      	ldr	r3, [pc, #280]	; (80013f4 <HAL_TIM_PeriodElapsedCallback+0xddc>)
+ 80012dc:	ed93 5a00 	vldr	s10, [r3]
+ 80012e0:	4b45      	ldr	r3, [pc, #276]	; (80013f8 <HAL_TIM_PeriodElapsedCallback+0xde0>)
+ 80012e2:	edd3 7a00 	vldr	s15, [r3]
+ 80012e6:	ee75 7a67 	vsub.f32	s15, s10, s15
+ 80012ea:	ee65 7aa7 	vmul.f32	s15, s11, s15
+ 80012ee:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 80012f2:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 80012f6:	ee26 7b07 	vmul.f64	d7, d6, d7
+ 80012fa:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 80012fe:	4b3f      	ldr	r3, [pc, #252]	; (80013fc <HAL_TIM_PeriodElapsedCallback+0xde4>)
+ 8001300:	edc3 7a00 	vstr	s15, [r3]
         tau_dob3 = 1.0 / (1.0 + G_DOB * dt) * ( tau_dob3_pre + G_DOB * dt * Gear * Ktn * ia3_ref - G_DOB * M33 * ( dtheta3_res - dtheta3_res_pre ) );
- 8001300:	ed9f 7a44 	vldr	s14, [pc, #272]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 8001304:	eddf 7a44 	vldr	s15, [pc, #272]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 8001308:	ee67 7a27 	vmul.f32	s15, s14, s15
- 800130c:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8001310:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
- 8001314:	ee37 7b06 	vadd.f64	d7, d7, d6
- 8001318:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
- 800131c:	ee85 6b07 	vdiv.f64	d6, d5, d7
- 8001320:	ed9f 7a3c 	vldr	s14, [pc, #240]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 8001324:	eddf 7a3c 	vldr	s15, [pc, #240]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 8001328:	ee67 7a27 	vmul.f32	s15, s14, s15
- 800132c:	ed9f 7a3b 	vldr	s14, [pc, #236]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
- 8001330:	ee67 7a87 	vmul.f32	s15, s15, s14
- 8001334:	ed9f 7a3a 	vldr	s14, [pc, #232]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
- 8001338:	ee27 7a87 	vmul.f32	s14, s15, s14
- 800133c:	4b30      	ldr	r3, [pc, #192]	; (8001400 <HAL_TIM_PeriodElapsedCallback+0xde8>)
- 800133e:	edd3 7a00 	vldr	s15, [r3]
- 8001342:	ee27 7a27 	vmul.f32	s14, s14, s15
- 8001346:	4b2f      	ldr	r3, [pc, #188]	; (8001404 <HAL_TIM_PeriodElapsedCallback+0xdec>)
- 8001348:	edd3 7a00 	vldr	s15, [r3]
- 800134c:	ee37 7a27 	vadd.f32	s14, s14, s15
- 8001350:	eddf 5a15 	vldr	s11, [pc, #84]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
- 8001354:	eddf 7a30 	vldr	s15, [pc, #192]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
- 8001358:	ee65 5aa7 	vmul.f32	s11, s11, s15
- 800135c:	4b2a      	ldr	r3, [pc, #168]	; (8001408 <HAL_TIM_PeriodElapsedCallback+0xdf0>)
- 800135e:	ed93 5a00 	vldr	s10, [r3]
- 8001362:	4b2a      	ldr	r3, [pc, #168]	; (800140c <HAL_TIM_PeriodElapsedCallback+0xdf4>)
- 8001364:	edd3 7a00 	vldr	s15, [r3]
- 8001368:	ee75 7a67 	vsub.f32	s15, s10, s15
- 800136c:	ee65 7aa7 	vmul.f32	s15, s11, s15
- 8001370:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001374:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
- 8001378:	ee26 7b07 	vmul.f64	d7, d6, d7
- 800137c:	eef7 7bc7 	vcvt.f32.f64	s15, d7
- 8001380:	4b23      	ldr	r3, [pc, #140]	; (8001410 <HAL_TIM_PeriodElapsedCallback+0xdf8>)
- 8001382:	edc3 7a00 	vstr	s15, [r3]
+ 8001304:	ed9f 7a43 	vldr	s14, [pc, #268]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 8001308:	eddf 7a43 	vldr	s15, [pc, #268]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 800130c:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 8001310:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 8001314:	eeb7 6b00 	vmov.f64	d6, #112	; 0x3f800000  1.0
+ 8001318:	ee37 7b06 	vadd.f64	d7, d7, d6
+ 800131c:	eeb7 5b00 	vmov.f64	d5, #112	; 0x3f800000  1.0
+ 8001320:	ee85 6b07 	vdiv.f64	d6, d5, d7
+ 8001324:	ed9f 7a3b 	vldr	s14, [pc, #236]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 8001328:	eddf 7a3b 	vldr	s15, [pc, #236]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 800132c:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 8001330:	ed9f 7a3a 	vldr	s14, [pc, #232]	; 800141c <HAL_TIM_PeriodElapsedCallback+0xe04>
+ 8001334:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 8001338:	ed9f 7a39 	vldr	s14, [pc, #228]	; 8001420 <HAL_TIM_PeriodElapsedCallback+0xe08>
+ 800133c:	ee27 7a87 	vmul.f32	s14, s15, s14
+ 8001340:	4b2f      	ldr	r3, [pc, #188]	; (8001400 <HAL_TIM_PeriodElapsedCallback+0xde8>)
+ 8001342:	edd3 7a00 	vldr	s15, [r3]
+ 8001346:	ee27 7a27 	vmul.f32	s14, s14, s15
+ 800134a:	4b2e      	ldr	r3, [pc, #184]	; (8001404 <HAL_TIM_PeriodElapsedCallback+0xdec>)
+ 800134c:	edd3 7a00 	vldr	s15, [r3]
+ 8001350:	ee37 7a27 	vadd.f32	s14, s14, s15
+ 8001354:	eddf 5a14 	vldr	s11, [pc, #80]	; 80013a8 <HAL_TIM_PeriodElapsedCallback+0xd90>
+ 8001358:	eddf 7a2f 	vldr	s15, [pc, #188]	; 8001418 <HAL_TIM_PeriodElapsedCallback+0xe00>
+ 800135c:	ee65 5aa7 	vmul.f32	s11, s11, s15
+ 8001360:	4b29      	ldr	r3, [pc, #164]	; (8001408 <HAL_TIM_PeriodElapsedCallback+0xdf0>)
+ 8001362:	ed93 5a00 	vldr	s10, [r3]
+ 8001366:	4b29      	ldr	r3, [pc, #164]	; (800140c <HAL_TIM_PeriodElapsedCallback+0xdf4>)
+ 8001368:	edd3 7a00 	vldr	s15, [r3]
+ 800136c:	ee75 7a67 	vsub.f32	s15, s10, s15
+ 8001370:	ee65 7aa7 	vmul.f32	s15, s11, s15
+ 8001374:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001378:	eeb7 7ae7 	vcvt.f64.f32	d7, s15
+ 800137c:	ee26 7b07 	vmul.f64	d7, d6, d7
+ 8001380:	eef7 7bc7 	vcvt.f32.f64	s15, d7
+ 8001384:	4b22      	ldr	r3, [pc, #136]	; (8001410 <HAL_TIM_PeriodElapsedCallback+0xdf8>)
+ 8001386:	edc3 7a00 	vstr	s15, [r3]
         tau_dob4 = 1.0 / (1.0 + G_DOB * dt) * ( tau_dob4_pre + G_DOB * dt * Gear * Ktn * ia4_ref - G_DOB * M44 * ( dtheta4_res - dtheta4_res_pre ) );
- 8001386:	ed9f 7a23 	vldr	s14, [pc, #140]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
- 800138a:	e04b      	b.n	8001424 <HAL_TIM_PeriodElapsedCallback+0xe0c>
- 800138c:	f3af 8000 	nop.w
+ 800138a:	ed9f 7a22 	vldr	s14, [pc, #136]	; 8001414 <HAL_TIM_PeriodElapsedCallback+0xdfc>
+ 800138e:	e049      	b.n	8001424 <HAL_TIM_PeriodElapsedCallback+0xe0c>
  8001390:	41733ce4 	.word	0x41733ce4
  8001394:	3f632043 	.word	0x3f632043
  8001398:	80000000 	.word	0x80000000
