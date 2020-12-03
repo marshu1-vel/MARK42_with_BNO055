@@ -775,7 +775,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // vx_cmd = 0.0;
-        vy_cmd = -0.5;
+        vy_cmd = 0.5;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]

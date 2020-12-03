@@ -39,9 +39,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000d25a  00000000  00000000  000620d0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000fe993  00000000  00000000  0006f32a  2**0
+ 18 .debug_str    000fe992  00000000  00000000  0006f32a  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  0016dcbd  2**0
+ 19 .comment      0000007b  00000000  00000000  0016dcbc  2**0
                   CONTENTS, READONLY
  20 .debug_frame  000054e4  00000000  00000000  0016dd38  2**2
                   CONTENTS, READONLY, DEBUGGING
@@ -1170,9 +1170,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000dde:	b25a      	sxtb	r2, r3
  8000de0:	4b7d      	ldr	r3, [pc, #500]	; (8000fd8 <HAL_TIM_PeriodElapsedCallback+0x9c0>)
  8000de2:	701a      	strb	r2, [r3, #0]
-        vy_cmd = -0.5;
+        vy_cmd = 0.5;
  8000de4:	4b7d      	ldr	r3, [pc, #500]	; (8000fdc <HAL_TIM_PeriodElapsedCallback+0x9c4>)
- 8000de6:	f04f 423f 	mov.w	r2, #3204448256	; 0xbf000000
+ 8000de6:	f04f 527c 	mov.w	r2, #1056964608	; 0x3f000000
  8000dea:	601a      	str	r2, [r3, #0]
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
  8000dec:	4b7c      	ldr	r3, [pc, #496]	; (8000fe0 <HAL_TIM_PeriodElapsedCallback+0x9c8>)
