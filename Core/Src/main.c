@@ -7,6 +7,7 @@
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
+#define Enable_I2C
 #define Enable_Identification
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -35,6 +36,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include "bno055_stm32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +54,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
+I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -474,6 +478,23 @@ float Mz_hat = 0.0;
 // * DFOB
 
 
+// * IMU
+bno055_vector_t Euler;
+bno055_vector_t Gyro;
+bno055_vector_t Acc;       // Without Fusion
+bno055_vector_t Acc_Linear;// With Fusion
+
+float yaw = 1.0;
+float roll = 0.0;
+float pitch = 0.0;
+
+float yaw_rate = 0.0;
+
+float Acc_x = 0.0;
+float Acc_y = 0.0;
+// * IMU
+
+
 // * Save variables in SRAM
 #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 
@@ -554,6 +575,15 @@ float tau_dfob4_SRAM[N_SRAM] = {};
 // float x_res_SRAM[N_SRAM] = {};
 // float y_res_SRAM[N_SRAM] = {};
 // float phi_res_SRAM[N_SRAM] = {};
+
+float yaw_SRAM[N_SRAM] = {};
+float roll_SRAM[N_SRAM] = {};
+float pitch_SRAM[N_SRAM] = {};
+
+float yaw_rate_SRAM[N_SRAM] = {};
+
+float Acc_x_SRAM[N_SRAM] = {};
+float Acc_y_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 
@@ -577,6 +607,7 @@ static void MX_TIM4_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM9_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if(htim->Instance==TIM2){
@@ -775,7 +806,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // vx_cmd = 0.0;
-        vy_cmd = 0.3;
+        vy_cmd = 0.5;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
@@ -1079,6 +1110,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // printf("%d, ", PWM2);
         // printf("%d, ", PWM3);
         // printf("%d, ", PWM4);
+
+        // printf("%.2f, %.2f, %.2f,   ", Euler.x, Euler.y, Euler.z);// yaw, roll, pitch
+        // printf("%.2f, ", Gyro.x);
+        // printf("%.2f, ", Gyro.y);
+        // printf("%.2f,   ", Gyro.z);
+        // printf("%.2f, %.2f, %.2f,   ", Acc.x,        Acc.y,        Acc.z);
+
         // printf("\r\n");
         // }
 
@@ -1148,6 +1186,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           tau_dfob2_SRAM[i_save] = tau_dfob2;
           tau_dfob3_SRAM[i_save] = tau_dfob3;
           tau_dfob4_SRAM[i_save] = tau_dfob4;
+
+          yaw_SRAM[i_save] = Euler.x;
+          roll_SRAM[i_save] = Euler.y;
+          pitch_SRAM[i_save] = Euler.z;
+
+          yaw_rate_SRAM[i_save] = Gyro.z;
+
+          Acc_x_SRAM[i_save] = Acc.x;
+          Acc_y_SRAM[i_save] = Acc.y;
 
           i_save++;
         }
@@ -1298,6 +1345,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", tau_dfob3_SRAM[i_output]);
           printf("%f, ", tau_dfob4_SRAM[i_output]);
 
+          printf("%f, ", yaw_SRAM[i_output]);
+          printf("%f, ", roll_SRAM[i_output]);
+          printf("%f, ", pitch_SRAM[i_output]);
+
+          printf("%f, ", yaw_rate_SRAM[i_output]);
+
+          printf("%f, ", Acc_x_SRAM[i_output]);
+          printf("%f, ", Acc_y_SRAM[i_output]);
+
           printf("\r\n");
         }
         break;
@@ -1351,6 +1407,7 @@ int main(void)
   MX_TIM8_Init();
   MX_TIM5_Init();
   MX_TIM9_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
 
@@ -1369,6 +1426,13 @@ int main(void)
   HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim9, TIM_CHANNEL_2);
 
+  #ifdef Enable_I2C
+  bno055_assignI2C(&hi2c1);
+  bno055_reset();
+  bno055_setup();
+  bno055_setOperationModeNDOF();
+  #endif
+
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0,  GPIO_PIN_SET); // Green
 
 //  printf("\r\n initialized Success!!\r\n");
@@ -1378,6 +1442,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    #ifdef Enable_I2C
+    Euler      = bno055_getVectorEuler();
+    Gyro       = bno055_getVectorGyroscope();
+    Acc        = bno055_getVectorAccelerometer();
+    Acc_Linear = bno055_getVectorLinearAccel();
+    #endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -1436,13 +1506,61 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x2010091A;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
