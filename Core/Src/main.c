@@ -155,7 +155,7 @@ float dtheta2_res_pre = 0.0;
 float dtheta3_res_pre = 0.0;
 float dtheta4_res_pre = 0.0;
 
-#define G_LPF 20.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0
+#define G_LPF 50.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0 20.0
 
 float dtheta1_res_raw = 0.0;// [rad/sec]
 float dtheta2_res_raw = 0.0;
@@ -266,17 +266,17 @@ float phi_res = 1.570796326794895;// [rad]
 // const float F4_minus = -0.00002;
 
 // * 2020/11/14
-const float D1_plus  =  0.0004; // Viscous frcition coefficient [Nm*sec/rad]
-const float D1_minus = 0.0003;
+// const float D1_plus  =  0.0004; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_minus = 0.0003;
 
-const float D2_plus  =  -0.0006;
-const float D2_minus = -0.0003;
+// const float D2_plus  =  -0.0006;
+// const float D2_minus = -0.0003;
 
-const float D3_plus  =  0.0042;
-const float D3_minus = 0.0027;
+// const float D3_plus  =  0.0042;
+// const float D3_minus = 0.0027;
 
-const float D4_plus  =  -0.0005;
-const float D4_minus = -0.000004;
+// const float D4_plus  =  -0.0005;
+// const float D4_minus = -0.000004;
 
 // const float F1_plus  =  0.0324;// Coulomb friction torque [Nm]
 // const float F1_minus = -0.0312;
@@ -291,17 +291,17 @@ const float D4_minus = -0.000004;
 // const float F4_minus = -0.0525;
 
 
-const float F1_plus  =  0.0;// Coulomb friction torque [Nm]
-const float F1_minus = 0.0;
+// const float F1_plus  =  0.0;// Coulomb friction torque [Nm]
+// const float F1_minus = 0.0;
 
-const float F2_plus  =  0.0;
-const float F2_minus = 0.0;
+// const float F2_plus  =  0.0;
+// const float F2_minus = 0.0;
 
-const float F3_plus  =  0.0;
-const float F3_minus = 0.0;
+// const float F3_plus  =  0.0;
+// const float F3_minus = 0.0;
 
-const float F4_plus  =  0.0;
-const float F4_minus = 0.0;
+// const float F4_plus  =  0.0;
+// const float F4_minus = 0.0;
 
 // const float F1_plus  =  0.0158;// Coulomb friction torque [Nm]
 // const float F1_minus = -0.0163;
@@ -322,6 +322,35 @@ const float F4_minus = 0.0;
 // const float F4_minus = -0.026;// -0.00002;
 // const float D4_plus  =  -0.00211;// 0.0011;
 // const float D4_minus = -0.0022;// -0.0011;
+// * 2020/11/14
+
+
+// * 2020/12/11
+const float D1_plus  = -0.00003; // Viscous frcition coefficient [Nm*sec/rad]
+const float D1_minus =  0.0003;
+
+const float D2_plus  = -0.0002;
+const float D2_minus =  0.00003;
+
+const float D3_plus  = 0.0001;
+const float D3_minus = 0.0015;
+
+const float D4_plus  = 0.0011;
+const float D4_minus = 0.001;
+
+const float F1_plus  =  0.01794;// Coulomb friction torque [Nm]
+const float F1_minus = -0.0448;
+
+const float F2_plus  =  0.0278;
+const float F2_minus = -0.05695;
+
+const float F3_plus  =  0.0366;
+const float F3_minus = -0.0695;
+
+const float F4_plus  =  0.0263;
+const float F4_minus = -0.0655;
+// * 2020/12/11
+
 
 const float M11 = a + b + Gear * Gear * J1;// 0.00422
 const float M12 = b;// 0.00015
@@ -484,14 +513,17 @@ bno055_vector_t Gyro;
 bno055_vector_t Acc;       // Without Fusion
 bno055_vector_t Acc_Linear;// With Fusion
 
-float yaw = 1.0;
+float yaw = 0.0;
 float roll = 0.0;
 float pitch = 0.0;
 
 float yaw_rate = 0.0;
+float roll_rate = 0.0;
+float pitch_rate = 0.0;
 
 float Acc_x = 0.0;
 float Acc_y = 0.0;
+float Acc_z = 0.0;
 // * IMU
 
 
@@ -581,9 +613,12 @@ float roll_SRAM[N_SRAM] = {};
 float pitch_SRAM[N_SRAM] = {};
 
 float yaw_rate_SRAM[N_SRAM] = {};
+float roll_rate_SRAM[N_SRAM] = {};
+float pitch_rate_SRAM[N_SRAM] = {};
 
 float Acc_x_SRAM[N_SRAM] = {};
 float Acc_y_SRAM[N_SRAM] = {};
+float Acc_z_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 
@@ -801,12 +836,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Convert Local to Joint space
         // Jacobi T matirix (including "Rw")
 
-        // if(t > 3.0){
-        //   vy_cmd = -0.3;// [m/sec]
+        // * For angular acceleration experiment
+        // if(t < 5.0){
+        //   vy_cmd = 0.1;// [m/sec]
+        // }else{
+        //   vy_cmd = 0.5;
         // }
+        // * For angular acceleration experiment
 
-        // vx_cmd = 0.0;
-        vy_cmd = 0.5;
+        // vx_cmd = 0.3;
+        vy_cmd = -0.045;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
@@ -1192,9 +1231,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           pitch_SRAM[i_save] = Euler.z;
 
           yaw_rate_SRAM[i_save] = Gyro.z;
+          roll_rate_SRAM[i_save] = Gyro.x;
+          pitch_rate_SRAM[i_save] = Gyro.y;
 
           Acc_x_SRAM[i_save] = Acc.x;
           Acc_y_SRAM[i_save] = Acc.y;
+          Acc_z_SRAM[i_save] = Acc.z;
 
           i_save++;
         }
@@ -1220,8 +1262,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		// }
 
 		mode++;
-		printf("%d, ", mode);
-		printf("\r\n");
+		// printf("%d, ", mode);
+		// printf("\r\n");
 
     divide = mode % 3;
 
@@ -1350,9 +1392,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", pitch_SRAM[i_output]);
 
           printf("%f, ", yaw_rate_SRAM[i_output]);
+          printf("%f, ", roll_rate_SRAM[i_output]);
+          printf("%f, ", pitch_rate_SRAM[i_output]);
 
           printf("%f, ", Acc_x_SRAM[i_output]);
           printf("%f, ", Acc_y_SRAM[i_output]);
+          printf("%f, ", Acc_z_SRAM[i_output]);
 
           printf("\r\n");
         }
@@ -1446,7 +1491,7 @@ int main(void)
     Euler      = bno055_getVectorEuler();
     Gyro       = bno055_getVectorGyroscope();
     Acc        = bno055_getVectorAccelerometer();
-    Acc_Linear = bno055_getVectorLinearAccel();
+    // Acc_Linear = bno055_getVectorLinearAccel();
     #endif
     /* USER CODE END WHILE */
 
