@@ -8,7 +8,8 @@
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
 #define Enable_I2C
-#define Enable_Identification
+#define Enable_Inertia_Identification
+// #define Enable_Inertia_Mass_Matrix_by_Lagrange
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
   ******************************************************************************
@@ -351,7 +352,7 @@ const float F4_plus  =  0.0263;
 const float F4_minus = -0.0655;
 // * 2020/12/11
 
-
+#ifdef Enable_Inertia_Mass_Matrix_by_Lagrange
 const float M11 = a + b + Gear * Gear * J1;// 0.00422
 const float M12 = b;// 0.00015
 const float M13 = a - b;// 0.00158
@@ -371,6 +372,16 @@ const float M41 = -b;
 const float M42 = a-b;
 const float M43 = b;
 const float M44 = a + b + Gear * Gear * J4;
+#endif
+
+#ifdef Enable_Inertia_Identification
+const float M11 = Gear * Gear * J1;
+const float M22 = Gear * Gear * J2;
+const float M33 = Gear * Gear * J3;
+const float M44 = Gear * Gear * J4;
+#endif
+
+
 // * Motor Parameters
 
 
@@ -564,11 +575,6 @@ uint16_t PWM1_SRAM[N_SRAM] = {};
 uint16_t PWM2_SRAM[N_SRAM] = {};
 uint16_t PWM3_SRAM[N_SRAM] = {};
 uint16_t PWM4_SRAM[N_SRAM] = {};
-
-// float tau_dis1_raw_SRAM[N_SRAM] = {};
-// float tau_dis2_raw_SRAM[N_SRAM] = {};
-// float tau_dis3_raw_SRAM[N_SRAM] = {};
-// float tau_dis4_raw_SRAM[N_SRAM] = {};
 
 float fd1_ref_SRAM[N_SRAM] = {};
 float fd2_ref_SRAM[N_SRAM] = {};
@@ -837,15 +843,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Jacobi T matirix (including "Rw")
 
         // * For angular acceleration experiment
+        if(t < 5.0){
+          vy_cmd = 0.3;// [m/sec]
+        }else if(t < 10.0){
+          vy_cmd = 0.5;
+        }else{
+          vy_cmd = 0.3;
+        }
+
         // if(t < 5.0){
-        //   vy_cmd = 0.1;// [m/sec]
+        //   vy_cmd = 0.3;// [m/sec]
         // }else{
         //   vy_cmd = 0.5;
         // }
         // * For angular acceleration experiment
 
         // vx_cmd = 0.3;
-        vy_cmd = -0.045;
+        // vy_cmd = 0.5;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
@@ -867,12 +881,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         ddtheta4_ref = Kp_av_df * (dtheta4_cmd - dtheta4_res);
         #endif
 
+        #ifdef Enable_Inertia_Mass_Matrix_by_Lagrange
         i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
         i2_ref = (M21*ddtheta1_ref + M22*ddtheta2_ref + M23*ddtheta3_ref + M24*ddtheta4_ref)/( Gear * Ktn );
         i3_ref = (M31*ddtheta1_ref + M32*ddtheta2_ref + M33*ddtheta3_ref + M34*ddtheta4_ref)/( Gear * Ktn );
         i4_ref = (M41*ddtheta1_ref + M42*ddtheta2_ref + M43*ddtheta3_ref + M44*ddtheta4_ref)/( Gear * Ktn );
+        #endif
 
-        #ifdef Enable_Identification
+        #ifdef Enable_Inertia_Identification
         // * When identifying F and D
         i1_ref = Gear * Gear * J1 * ddtheta1_ref / ( Gear * Ktn );
         i2_ref = Gear * Gear * J2 * ddtheta2_ref / ( Gear * Ktn );
@@ -882,25 +898,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef Enable_DOB
-        // tau_dis1_raw = Gear * Ktn * i1_ref - M11 * dtheta1_res;
-        // tau_dis2_raw = Gear * Ktn * i2_ref - M22 * dtheta2_res;
-        // tau_dis3_raw = Gear * Ktn * i3_ref - M33 * dtheta3_res;
-        // tau_dis4_raw = Gear * Ktn * i4_ref - M44 * dtheta4_res;
-
-        // tau_dob1 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob1_pre + G_DOB * dt * (tau_dis1_raw + tau_dis1_raw_pre) );
-        // tau_dob2 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob2_pre + G_DOB * dt * (tau_dis2_raw + tau_dis2_raw_pre) );
-        // tau_dob3 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob3_pre + G_DOB * dt * (tau_dis3_raw + tau_dis3_raw_pre) );
-        // tau_dob4 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob4_pre + G_DOB * dt * (tau_dis4_raw + tau_dis4_raw_pre) );
-
-        // tau_dis1_raw = Gear * Ktn * i1_ref + G_DOB * M11 * dtheta1_res;
-        // tau_dis2_raw = Gear * Ktn * i2_ref + G_DOB * M22 * dtheta2_res;
-        // tau_dis3_raw = Gear * Ktn * i3_ref + G_DOB * M33 * dtheta3_res;
-        // tau_dis4_raw = Gear * Ktn * i4_ref + G_DOB * M44 * dtheta4_res;
-
-        // tau_dob1 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob1_pre + G_DOB * dt * (tau_dis1_raw + tau_dis1_raw_pre) ) - G_DOB * M11 * dtheta1_res;
-        // tau_dob2 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob2_pre + G_DOB * dt * (tau_dis2_raw + tau_dis2_raw_pre) ) - G_DOB * M22 * dtheta2_res;
-        // tau_dob3 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob3_pre + G_DOB * dt * (tau_dis3_raw + tau_dis3_raw_pre) ) - G_DOB * M33 * dtheta3_res;
-        // tau_dob4 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob4_pre + G_DOB * dt * (tau_dis4_raw + tau_dis4_raw_pre) ) - G_DOB * M44 * dtheta4_res;
 
         // * Bilinear Transform / Tustin Transform
         // tau_dob1 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob1_pre + G_DOB * dt * Gear * Ktn * ( ia1_ref + ia1_ref_pre ) - 2.0 * G_DOB * M11 * ( dtheta1_res - dtheta1_res_pre ) );
@@ -922,11 +919,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           tau_dob2_pre = tau_dob2;
           tau_dob3_pre = tau_dob3;
           tau_dob4_pre = tau_dob4;
-
-          // tau_dis1_raw_pre = tau_dis1_raw;
-          // tau_dis2_raw_pre = tau_dis2_raw;
-          // tau_dis3_raw_pre = tau_dis3_raw;
-          // tau_dis4_raw_pre = tau_dis4_raw;
 
           ia1_ref_pre = ia1_ref;
           ia2_ref_pre = ia2_ref;
@@ -951,56 +943,113 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           case 0:
             // tau_dfob1_raw = Gear * Ktn * i1_ref - M11 * dtheta1_res - F1_plus  - D1_plus  * dtheta1_res;
             // tau_dfob1_raw = Gear * Ktn * i1_ref + G_DFOB * M11 * dtheta1_res - F1_plus  - D1_plus  * dtheta1_res;
-            // tau_dfob1 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob1_pre + G_DFOB * dt * ( Gear * Ktn * ia1_ref - F1_plus  - D1_plus  * dtheta1_res ) - G_DFOB*M11*(dtheta1_res - dtheta1_res_pre));// * Backward Difference
-            integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - F1_plus  - D1_plus  * dtheta1_res - integral_tau_dfob1) * G_DFOB * dt;// * Continuous
+            
+            // * Backward Difference
+            // tau_dfob1 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob1_pre + G_DFOB * dt * ( Gear * Ktn * ia1_ref - F1_plus  - D1_plus  * dtheta1_res ) - G_DFOB*M11*(dtheta1_res - dtheta1_res_pre));
+            // if( dtheta1_res < 0.5)
+            // * Backward Difference
+            
+
+            // * Continuous
+            integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - F1_plus  - D1_plus  * dtheta1_res - integral_tau_dfob1) * G_DFOB * dt;
+            // * Continuous
             break;
           case 1:
             // tau_dfob1_raw = Gear * Ktn * i1_ref - M11 * dtheta1_res - F1_minus - D1_minus * dtheta1_res;
             // tau_dfob1_raw = Gear * Ktn * i1_ref + G_DFOB * M11 * dtheta1_res - F1_minus - D1_minus * dtheta1_res;
+
+            // * Backward Difference
             // tau_dfob1 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob1_pre + G_DFOB * dt * ( Gear * Ktn * ia1_ref - F1_minus - D1_minus * dtheta1_res ) - G_DFOB*M11*(dtheta1_res - dtheta1_res_pre));
-            integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - F1_minus  - D1_minus  * dtheta1_res - integral_tau_dfob1) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - F1_minus  - D1_minus  * dtheta1_res - integral_tau_dfob1) * G_DFOB * dt;
+            // * Continuous
             break;
         }
         switch(direc2){
           case 0:
             // tau_dfob2_raw = Gear * Ktn * i2_ref - M22 * dtheta2_res - F2_plus  - D2_plus  * dtheta2_res;
             // tau_dfob2_raw = Gear * Ktn * i2_ref + G_DFOB * M22 * dtheta2_res - F2_plus  - D2_plus  * dtheta2_res;
+
+            // * Backward Difference
             // tau_dfob2 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob2_pre + G_DFOB * dt * ( Gear * Ktn * ia2_ref - F2_plus  - D2_plus  * dtheta2_res ) - G_DFOB*M22*(dtheta2_res - dtheta2_res_pre));
-            integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - F2_plus  - D2_plus  * dtheta2_res - integral_tau_dfob2) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - F2_plus  - D2_plus  * dtheta2_res - integral_tau_dfob2) * G_DFOB * dt;
+            // * Continuous
             break;
           case 1:
             // tau_dfob2_raw = Gear * Ktn * i2_ref - M22 * dtheta2_res - F2_minus - D2_minus * dtheta2_res;
             // tau_dfob2_raw = Gear * Ktn * i2_ref + G_DFOB * M22 * dtheta2_res - F2_minus - D2_minus * dtheta2_res;
+
+            // * Backward Difference
             // tau_dfob2 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob2_pre + G_DFOB * dt * ( Gear * Ktn * ia2_ref - F2_minus - D2_minus * dtheta2_res ) - G_DFOB*M22*(dtheta2_res - dtheta2_res_pre));
-            integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - F2_minus  - D2_minus  * dtheta2_res - integral_tau_dfob2) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - F2_minus  - D2_minus  * dtheta2_res - integral_tau_dfob2) * G_DFOB * dt;
+            // * Continuous
             break;
         }
         switch(direc3){
           case 0:
             // tau_dfob3_raw = Gear * Ktn * i3_ref - M33 * dtheta3_res - F3_plus  - D3_plus  * dtheta3_res;
             // tau_dfob3_raw = Gear * Ktn * i3_ref + G_DFOB * M33 * dtheta3_res - F3_plus  - D3_plus  * dtheta3_res;
+
+            // * Backward Difference
             // tau_dfob3 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob3_pre + G_DFOB * dt * ( Gear * Ktn * ia3_ref - F3_plus  - D3_plus  * dtheta3_res ) - G_DFOB*M33*(dtheta3_res - dtheta3_res_pre));
-            integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - F3_plus  - D3_plus  * dtheta3_res - integral_tau_dfob3) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - F3_plus  - D3_plus  * dtheta3_res - integral_tau_dfob3) * G_DFOB * dt;
+            // * Continuous
             break;
           case 1:
             // tau_dfob3_raw = Gear * Ktn * i3_ref - M33 * dtheta3_res - F3_minus - D3_minus * dtheta3_res;
             // tau_dfob3_raw = Gear * Ktn * i3_ref + G_DFOB * M33 * dtheta3_res - F3_minus - D3_minus * dtheta3_res;
+
+            // * Backward Difference
             // tau_dfob3 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob3_pre + G_DFOB * dt * ( Gear * Ktn * ia3_ref - F3_minus - D3_minus * dtheta3_res ) - G_DFOB*M33*(dtheta3_res - dtheta3_res_pre));
-            integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - F3_minus  - D3_minus  * dtheta3_res - integral_tau_dfob3) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - F3_minus  - D3_minus  * dtheta3_res - integral_tau_dfob3) * G_DFOB * dt;
+            // * Continuous
             break;
         }
         switch(direc4){
           case 0:
             // tau_dfob4_raw = Gear * Ktn * i4_ref - M44 * dtheta4_res - F4_plus  - D4_plus  * dtheta4_res;
             // tau_dfob4_raw = Gear * Ktn * i4_ref + G_DFOB * M44 * dtheta4_res - F4_plus  - D4_plus  * dtheta4_res;
+
+            // * Backward Difference
             // tau_dfob4 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob4_pre + G_DFOB * dt * ( Gear * Ktn * ia4_ref - F4_plus  - D4_plus  * dtheta4_res ) - G_DFOB*M44*(dtheta4_res - dtheta4_res_pre));
-            integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - F4_plus  - D4_plus  * dtheta4_res - integral_tau_dfob4) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - F4_plus  - D4_plus  * dtheta4_res - integral_tau_dfob4) * G_DFOB * dt;
+            // * Continuous
             break;
           case 1:
             // tau_dfob4_raw = Gear * Ktn * i4_ref - M44 * dtheta4_res - F4_minus - D4_minus * dtheta4_res;
             // tau_dfob4_raw = Gear * Ktn * i4_ref + G_DFOB * M44 * dtheta4_res - F4_minus - D4_minus * dtheta4_res;
+
+            // * Backward Difference
             // tau_dfob4 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob4_pre + G_DFOB * dt * ( Gear * Ktn * ia4_ref - F4_minus - D4_minus * dtheta4_res ) - G_DFOB*M44*(dtheta4_res - dtheta4_res_pre));
-            integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - F4_minus  - D4_minus  * dtheta4_res - integral_tau_dfob4) * G_DFOB * dt;// * Continuous
+            // * Backward Difference
+
+
+            // * Continuous
+            integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - F4_minus  - D4_minus  * dtheta4_res - integral_tau_dfob4) * G_DFOB * dt;
+            // * Continuous
             break;
         }
 
@@ -1196,11 +1245,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           PWM3_SRAM[i_save] = PWM3;
           PWM4_SRAM[i_save] = PWM4;
 
-          // tau_dis1_raw_SRAM[i_save] = tau_dis1_raw;
-          // tau_dis2_raw_SRAM[i_save] = tau_dis2_raw;
-          // tau_dis3_raw_SRAM[i_save] = tau_dis3_raw;
-          // tau_dis4_raw_SRAM[i_save] = tau_dis4_raw;
-
           fd1_ref_SRAM[i_save] = fd1_ref;
           fd2_ref_SRAM[i_save] = fd2_ref;
           fd3_ref_SRAM[i_save] = fd3_ref;
@@ -1361,11 +1405,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%d, ", PWM2_SRAM[i_output]);
           printf("%d, ", PWM3_SRAM[i_output]);
           printf("%d, ", PWM4_SRAM[i_output]);
-
-          // printf("%f, ", tau_dis1_raw_SRAM[i_output]);
-          // printf("%f, ", tau_dis2_raw_SRAM[i_output]);
-          // printf("%f, ", tau_dis3_raw_SRAM[i_output]);
-          // printf("%f, ", tau_dis4_raw_SRAM[i_output]);
 
           printf("%f, ", fd1_ref_SRAM[i_output]);
           printf("%f, ", fd2_ref_SRAM[i_output]);
