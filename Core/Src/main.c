@@ -3,7 +3,7 @@
 #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
-#define Enable_D_Controller_av
+#define Enable_PD_controller_av
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
@@ -327,30 +327,57 @@ float phi_res = 1.570796326794895;// [rad]
 
 
 // * 2020/12/11 : First, before acceleration experiment
-const float D1_plus  = -0.00003; // Viscous frcition coefficient [Nm*sec/rad]
-const float D1_minus =  0.0003;
+// const float D1_plus  = -0.00003; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_minus =  0.0003;
 
-const float D2_plus  = -0.0002;
-const float D2_minus =  0.00003;
+// const float D2_plus  = -0.0002;
+// const float D2_minus =  0.00003;
 
-const float D3_plus  = 0.0001;
-const float D3_minus = 0.0015;
+// const float D3_plus  = 0.0001;
+// const float D3_minus = 0.0015;
 
-const float D4_plus  = 0.0011;
+// const float D4_plus  = 0.0011;
+// const float D4_minus = 0.001;
+
+// const float F1_plus  =  0.01794;// Coulomb friction torque [Nm]
+// const float F1_minus = -0.0448;
+
+// const float F2_plus  =  0.0278;
+// const float F2_minus = -0.05695;
+
+// const float F3_plus  =  0.0366;
+// const float F3_minus = -0.0695;
+
+// const float F4_plus  =  0.0263;
+// const float F4_minus = -0.0655;
+// * 2020/12/11
+
+
+// * 2020/12/12 : Second, utilize inertia( Gear * Gear * J ) (not utilize inertia by acceleration experiment)
+const float D1_plus  = 0.0005; // Viscous frcition coefficient [Nm*sec/rad]
+const float D1_minus = 0.0006;
+
+const float D2_plus  = 0.0004;
+const float D2_minus = 0.000007;
+
+const float D3_plus  = 0.0011;
+const float D3_minus = 0.0021;
+
+const float D4_plus  = 0.0012;
 const float D4_minus = 0.001;
 
-const float F1_plus  =  0.01794;// Coulomb friction torque [Nm]
-const float F1_minus = -0.0448;
+const float F1_plus  = 0.0173;// Coulomb friction torque [Nm]
+const float F1_minus = 0.0424;
 
-const float F2_plus  =  0.0278;
-const float F2_minus = -0.05695;
+const float F2_plus  = 0.0206;
+const float F2_minus = 0.052518;
 
-const float F3_plus  =  0.0366;
-const float F3_minus = -0.0695;
+const float F3_plus  = 0.0391;
+const float F3_minus = 0.0633;
 
-const float F4_plus  =  0.0263;
-const float F4_minus = -0.0655;
-// * 2020/12/11
+const float F4_plus  = 0.0276;
+const float F4_minus = 0.0664;
+// * 2020/12/12
 
 #ifdef Enable_Inertia_Mass_Matrix_by_Lagrange
 const float M11 = a + b + Gear * Gear * J1;// 0.00422
@@ -375,10 +402,10 @@ const float M44 = a + b + Gear * Gear * J4;
 #endif
 
 #ifdef Enable_Inertia_Identification
-// const float M11 = Gear * Gear * J1;// 0.00233472
-// const float M22 = Gear * Gear * J2;
-// const float M33 = Gear * Gear * J3;
-// const float M44 = Gear * Gear * J4;
+const float M11 = Gear * Gear * J1;// 0.00233472
+const float M22 = Gear * Gear * J2;
+const float M33 = Gear * Gear * J3;
+const float M44 = Gear * Gear * J4;
 
 // * First identification
 // const float M11 = 0.002797896;// 0.00233472
@@ -387,10 +414,10 @@ const float M44 = a + b + Gear * Gear * J4;
 // const float M44 = 0.002736898;
 
 // * Second
-const float M11 = 0.00348393;// 0.00233472
-const float M22 = 0.003551489;
-const float M33 = 0.003543495;
-const float M44 = 0.003475158;
+// const float M11 = 0.00348393;// 0.00233472
+// const float M22 = 0.003551489;
+// const float M33 = 0.003543495;
+// const float M44 = 0.003475158;
 #endif
 
 
@@ -401,17 +428,17 @@ const float M44 = 0.003475158;
 #define Kp_av    20.0f// Gain for angular velocity control 100.0
 #define Kp_av_df 10.0f// Gain for Driving Force    control 10.0
 #define Kp_av_4 5.0f
-float Kd_av = 0.4;//0.05;//2.0 * sqrt(Kp_av);
+float Kd_av = 0.08;//0.05;//2.0 * sqrt(Kp_av);
 #define G_LPF_D_av 50.0f// D controller of angular velocity control
 
-float D_controller1_av = 0.0;
-float D_controller2_av = 0.0;
-float D_controller3_av = 0.0;
-float D_controller4_av = 0.0;
-float D_controller1_av_pre = 0.0;
-float D_controller2_av_pre = 0.0;
-float D_controller3_av_pre = 0.0;
-float D_controller4_av_pre = 0.0;
+float PD_controller1_av = 0.0;
+float PD_controller2_av = 0.0;
+float PD_controller3_av = 0.0;
+float PD_controller4_av = 0.0;
+float PD_controller1_av_pre = 0.0;
+float PD_controller2_av_pre = 0.0;
+float PD_controller3_av_pre = 0.0;
+float PD_controller4_av_pre = 0.0;
 
 float delta_dtheta1 = 0.0;
 float delta_dtheta2 = 0.0;
@@ -720,7 +747,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Driving_Force_Control
         if(t < 25.0){
-        vy_cmd = 0.3;// 0.4
+        vy_cmd = 0.5;// 0.4
         // vx_cmd = 0.3;
         // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
         }else if(t >= 25.0){
@@ -849,13 +876,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Jacobi T matirix (including "Rw")
 
         // * For angular acceleration experiment
-        if(t < 5.0){
-          vy_cmd = 0.3;// [m/sec]
-        }else if(t < 10.0){
-          vy_cmd = 0.5;
-        }else{
-          vy_cmd = 0.3;
-        }
+        // if(t < 5.0){
+        //   vy_cmd = 0.3;// [m/sec]
+        // }else if(t < 10.0){
+        //   vy_cmd = 0.5;
+        // }else{
+        //   vy_cmd = 0.3;
+        // }
 
         // if(t < 5.0){
         //   vy_cmd = 0.3;// [m/sec]
@@ -865,7 +892,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // * For angular acceleration experiment
 
         // vx_cmd = 0.3;
-        // vy_cmd = 0.3;
+        vy_cmd = 0.5;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
@@ -880,34 +907,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
         #endif
 
-        #ifdef Enable_D_Controller_av
+        #ifdef Enable_PD_controller_av
         delta_dtheta1 = dtheta1_cmd - dtheta1_res;
         delta_dtheta2 = dtheta2_cmd - dtheta2_res;
         delta_dtheta3 = dtheta3_cmd - dtheta3_res;
         delta_dtheta4 = dtheta4_cmd - dtheta4_res;
 
-        // D_controller1_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * D_controller1_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta1 - delta_dtheta1_pre));
-        // D_controller2_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * D_controller2_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta2 - delta_dtheta2_pre));
-        // D_controller3_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * D_controller3_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta3 - delta_dtheta3_pre));
-        // D_controller4_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * D_controller4_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta4 - delta_dtheta4_pre));
+        // PD_controller1_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * PD_controller1_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta1 - delta_dtheta1_pre));
+        // PD_controller2_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * PD_controller2_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta2 - delta_dtheta2_pre));
+        // PD_controller3_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * PD_controller3_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta3 - delta_dtheta3_pre));
+        // PD_controller4_av = Kd_av * 1.0 / (2.0 + G_LPF_D_av * dt) * ((2.0 - G_LPF_D_av * dt) * PD_controller4_av_pre + 2.0 * G_LPF_D_av * (delta_dtheta4 - delta_dtheta4_pre));
 
         // * Backward Difference
-        D_controller1_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( D_controller1_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta1 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta1_pre );
-        D_controller2_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( D_controller2_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta2 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta2_pre );
-        D_controller3_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( D_controller3_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta3 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta3_pre );
-        D_controller4_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( D_controller4_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta4 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta4_pre );
+        PD_controller1_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( PD_controller1_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta1 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta1_pre );
+        PD_controller2_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( PD_controller2_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta2 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta2_pre );
+        PD_controller3_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( PD_controller3_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta3 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta3_pre );
+        PD_controller4_av = 1.0 / (1.0 + G_LPF_D_av * dt) * ( PD_controller4_av_pre + ( Kp_av * ( 1.0 + G_LPF_D_av * dt ) + Kd_av * G_LPF_D_av )*delta_dtheta4 - (Kp_av + Kd_av * G_LPF_D_av) * delta_dtheta4_pre );
 
-        // * Mr. Yokokura's Method
-        // D_controller1_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( D_controller1_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta1-delta_dtheta1_pre) + G_LPF_D_av*dt*(delta_dtheta1+delta_dtheta1_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta1-delta_dtheta1_pre) );
-        // D_controller2_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( D_controller2_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta2-delta_dtheta2_pre) + G_LPF_D_av*dt*(delta_dtheta2+delta_dtheta2_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta2-delta_dtheta2_pre) );
-        // D_controller3_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( D_controller3_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta3-delta_dtheta3_pre) + G_LPF_D_av*dt*(delta_dtheta3+delta_dtheta3_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta3-delta_dtheta3_pre) );
-        // D_controller4_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( D_controller4_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta4-delta_dtheta4_pre) + G_LPF_D_av*dt*(delta_dtheta4+delta_dtheta4_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta4-delta_dtheta4_pre) );
+        // * Mr. Yokokura's Method ( Bilinear Transform / Tustin Transform )
+        // PD_controller1_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( PD_controller1_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta1-delta_dtheta1_pre) + G_LPF_D_av*dt*(delta_dtheta1+delta_dtheta1_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta1-delta_dtheta1_pre) );
+        // PD_controller2_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( PD_controller2_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta2-delta_dtheta2_pre) + G_LPF_D_av*dt*(delta_dtheta2+delta_dtheta2_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta2-delta_dtheta2_pre) );
+        // PD_controller3_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( PD_controller3_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta3-delta_dtheta3_pre) + G_LPF_D_av*dt*(delta_dtheta3+delta_dtheta3_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta3-delta_dtheta3_pre) );
+        // PD_controller4_av = 1.0 / (2.0 + G_LPF_D_av * dt) * ( PD_controller4_av_pre*(2.0-G_LPF_D_av*dt) + Kp_av*( 2.0*(delta_dtheta4-delta_dtheta4_pre) + G_LPF_D_av*dt*(delta_dtheta4+delta_dtheta4_pre) ) + 2.0*Kd_av*G_LPF_D_av*(delta_dtheta4-delta_dtheta4_pre) );
 
           // * Save previous values
-          D_controller1_av_pre = D_controller1_av;
-          D_controller2_av_pre = D_controller2_av;
-          D_controller3_av_pre = D_controller3_av;
-          D_controller4_av_pre = D_controller4_av;
+          PD_controller1_av_pre = PD_controller1_av;
+          PD_controller2_av_pre = PD_controller2_av;
+          PD_controller3_av_pre = PD_controller3_av;
+          PD_controller4_av_pre = PD_controller4_av;
 
           delta_dtheta1_pre = delta_dtheta1;
           delta_dtheta2_pre = delta_dtheta2;
@@ -915,10 +942,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           delta_dtheta4_pre = delta_dtheta4;
           // * Save previous values
 
-        ddtheta1_ref = D_controller1_av;
-        ddtheta2_ref = D_controller2_av;
-        ddtheta3_ref = D_controller3_av;
-        ddtheta4_ref = D_controller4_av;
+        ddtheta1_ref = PD_controller1_av;
+        ddtheta2_ref = PD_controller2_av;
+        ddtheta3_ref = PD_controller3_av;
+        ddtheta4_ref = PD_controller4_av;
         #endif
 
         // #ifdef angular_velocity_control
@@ -940,10 +967,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_Inertia_Identification
         // * When identifying F and D
-        i1_ref = Gear * Gear * J1 * ddtheta1_ref / ( Gear * Ktn );
-        i2_ref = Gear * Gear * J2 * ddtheta2_ref / ( Gear * Ktn );
-        i3_ref = Gear * Gear * J3 * ddtheta3_ref / ( Gear * Ktn );
-        i4_ref = Gear * Gear * J4 * ddtheta4_ref / ( Gear * Ktn );
+        i1_ref = M11 * ddtheta1_ref / ( Gear * Ktn );
+        i2_ref = M22 * ddtheta2_ref / ( Gear * Ktn );
+        i3_ref = M33 * ddtheta3_ref / ( Gear * Ktn );
+        i4_ref = M44 * ddtheta4_ref / ( Gear * Ktn );// Gear * Gear * J4 
         // * When identifying F and D
         #endif
 
@@ -1027,6 +1054,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         if( dtheta3_res < 0.5 && dtheta3_res > -0.5 ) tau_fric3 = 0.0;
         if( dtheta4_res < 0.5 && dtheta4_res > -0.5 ) tau_fric4 = 0.0;
 
+        // * Utilized when identify F & D ( Utilize DFOB as second DOB. DFOB is an observer for identification only at this time. )
+        // tau_fric1 = 0.0;
+        // tau_fric2 = 0.0;
+        // tau_fric3 = 0.0;
+        // tau_fric4 = 0.0;
+        // * Identification of F & D
+
         // * Continuous
         integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - tau_fric1 - integral_tau_dfob1) * G_DFOB * dt;
         integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - tau_fric2 - integral_tau_dfob2) * G_DFOB * dt;
@@ -1034,7 +1068,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - tau_fric4 - integral_tau_dfob4) * G_DFOB * dt;
         // * Continuous
 
-        // * Backward Difference
+        // * Backward Difference : Not work well
         // tau_dfob1 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob1_pre + G_DFOB * dt * ( Gear * Ktn * ia1_ref - tau_fric1 ) - G_DFOB*M11*(dtheta1_res - dtheta1_res_pre));
         // tau_dfob2 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob2_pre + G_DFOB * dt * ( Gear * Ktn * ia2_ref - tau_fric2 ) - G_DFOB*M22*(dtheta2_res - dtheta2_res_pre));
         // tau_dfob3 = 1.0 / ( G_DFOB * dt ) * ( tau_dfob3_pre + G_DFOB * dt * ( Gear * Ktn * ia3_ref - tau_fric3 ) - G_DFOB*M33*(dtheta3_res - dtheta3_res_pre));
