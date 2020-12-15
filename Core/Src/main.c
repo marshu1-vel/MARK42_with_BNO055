@@ -366,17 +366,17 @@ const float D3_minus = 0.0021;
 const float D4_plus  = 0.0012;
 const float D4_minus = 0.001;
 
-const float F1_plus  = 0.0173;// Coulomb friction torque [Nm]
-const float F1_minus = 0.0424;
+const float F1_plus  =  0.0173;// Coulomb friction torque [Nm]
+const float F1_minus = -0.0424;
 
-const float F2_plus  = 0.0206;
-const float F2_minus = 0.052518;
+const float F2_plus  =  0.0206;
+const float F2_minus = -0.052518;
 
-const float F3_plus  = 0.0391;
-const float F3_minus = 0.0633;
+const float F3_plus  =  0.0391;
+const float F3_minus = -0.0633;
 
-const float F4_plus  = 0.0276;
-const float F4_minus = 0.0664;
+const float F4_plus  =  0.0276;
+const float F4_minus = -0.0664;
 // * 2020/12/12
 
 #ifdef Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -876,13 +876,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Jacobi T matirix (including "Rw")
 
         // * For angular acceleration experiment
-        // if(t < 5.0){
-        //   vy_cmd = 0.3;// [m/sec]
-        // }else if(t < 10.0){
-        //   vy_cmd = 0.5;
-        // }else{
-        //   vy_cmd = 0.3;
-        // }
+        if(t < 5.0){
+          vy_cmd = 0.3;// [m/sec]
+        }else if(t < 10.0){
+          vy_cmd = 0.5;
+        }else{
+          vy_cmd = 0.3;
+        }
 
         // if(t < 5.0){
         //   vy_cmd = 0.3;// [m/sec]
@@ -892,7 +892,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // * For angular acceleration experiment
 
         // vx_cmd = 0.3;
-        vy_cmd = 0.5;
+        // vy_cmd = 0.5;
         // dphi_cmd = 0.0;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
