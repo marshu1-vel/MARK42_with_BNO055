@@ -102,7 +102,8 @@ PUTCHAR_PROTOTYPE
 
 float t = 0.0;
 const float dt = 0.001;// Control sampling time [sec]
-const float pi = 3.14159265358979;
+// const float pi = 3.14159265358979;
+#define pi 3.14159265358979f
 uint16_t loop = 0;
 uint8_t mode = 0;
 uint8_t divide = 0;// Remainder when mode is divided by 3.
@@ -562,6 +563,10 @@ float yaw = 0.0;
 float roll = 0.0;
 float pitch = 0.0;
 
+float yaw_initial = pi / 2.0;
+float yaw_pre = 0.0;
+float yaw_digit = 0.0;
+
 float yaw_rate = 0.0;
 float roll_rate = 0.0;
 float pitch_rate = 0.0;
@@ -721,11 +726,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         theta2_res = (cnt2 - cnt_offset + digit2 * 0x10000) / (4.0 * rsl * Gear)*2.0*pi;
         theta3_res = (cnt3 - cnt_offset + digit3 * 0x10000) / (4.0 * rsl * Gear)*2.0*pi;
         theta4_res = (cnt4 - cnt_offset + digit4 * 0x10000) / (4.0 * rsl * Gear)*2.0*pi;
+        
+        // * IMU
+        yaw   = Euler.x;// [degree]
+        roll  = Euler.y;
+        pitch = Euler.z;
 
-        dtheta1_res_raw = ( theta1_res - theta1_res_pre )/dt;
-        dtheta2_res_raw = ( theta2_res - theta2_res_pre )/dt;
-        dtheta3_res_raw = ( theta3_res - theta3_res_pre )/dt;
-        dtheta4_res_raw = ( theta4_res - theta4_res_pre )/dt;
+        yaw_rate   = Gyro.z;// [dps : degree/sec]
+        roll_rate  = Gyro.x;
+        pitch_rate = Gyro.y;
+
+        Acc_x = Acc.x;
+        Acc_y = Acc.y;
+        Acc_z = Acc.z;
+
+        yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert degree to rad
+        roll  = roll  * 2.0 * pi / 360.0;
+        pitch = pitch * 2.0 * pi / 360.0;
+
+        yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;
+        roll_rate  = roll_rate  * 2.0 * pi / 360.0;
+        pitch_rate = pitch_rate * 2.0 * pi / 360.0;
+
+        if     ( yaw - yaw_pre > 2.0*pi/2.0 ) yaw_digit--;
+        else if( yaw_pre - yaw > 2.0*pi/2.0 ) yaw_digit++;
+        yaw_pre = yaw;
+
+        yaw = (yaw + yaw_digit * 2.0 * pi);// :* 2.0 * pi / 360.0;
+
+        // dtheta1_res_raw = ( theta1_res - theta1_res_pre )/dt;
+        // dtheta2_res_raw = ( theta2_res - theta2_res_pre )/dt;
+        // dtheta3_res_raw = ( theta3_res - theta3_res_pre )/dt;
+        // dtheta4_res_raw = ( theta4_res - theta4_res_pre )/dt;
 
         dtheta1_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta1_res_pre + 2.0 * G_LPF * (theta1_res - theta1_res_pre) );
         dtheta2_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta2_res_pre + 2.0 * G_LPF * (theta2_res - theta2_res_pre) );
@@ -876,13 +908,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Jacobi T matirix (including "Rw")
 
         // * For angular acceleration experiment
-        if(t < 5.0){
-          vy_cmd = 0.3;// [m/sec]
-        }else if(t < 10.0){
-          vy_cmd = 0.5;
-        }else{
-          vy_cmd = 0.3;
-        }
+        // if(t < 5.0){
+        //   vy_cmd = 0.3;// [m/sec]
+        // }else if(t < 10.0){
+        //   vy_cmd = 0.5;
+        // }else{
+        //   vy_cmd = 0.3;
+        // }
 
         // if(t < 5.0){
         //   vy_cmd = 0.3;// [m/sec]
@@ -893,7 +925,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // vx_cmd = 0.3;
         // vy_cmd = 0.5;
-        // dphi_cmd = 0.0;
+        dphi_cmd = 0.5;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
         dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
@@ -1206,6 +1238,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // printf("%d, ", PWM3);
         // printf("%d, ", PWM4);
 
+        // printf("%.3f, ", yaw);
+        // printf("%.3f, ", yaw_digit);
+
         // printf("%.2f, %.2f, %.2f,   ", Euler.x, Euler.y, Euler.z);// yaw, roll, pitch
         // printf("%.2f, ", Gyro.x);
         // printf("%.2f, ", Gyro.y);
@@ -1277,17 +1312,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           tau_dfob3_SRAM[i_save] = tau_dfob3;
           tau_dfob4_SRAM[i_save] = tau_dfob4;
 
-          yaw_SRAM[i_save] = Euler.x;
-          roll_SRAM[i_save] = Euler.y;
-          pitch_SRAM[i_save] = Euler.z;
+          yaw_SRAM[i_save]   = yaw;//Euler.x;
+          roll_SRAM[i_save]  = roll;//Euler.y;
+          pitch_SRAM[i_save] = pitch;//Euler.z;
 
-          yaw_rate_SRAM[i_save] = Gyro.z;
-          roll_rate_SRAM[i_save] = Gyro.x;
-          pitch_rate_SRAM[i_save] = Gyro.y;
+          yaw_rate_SRAM[i_save]   = yaw_rate;//Gyro.z;
+          roll_rate_SRAM[i_save]  = roll_rate;//Gyro.x;
+          pitch_rate_SRAM[i_save] = pitch_rate;//Gyro.y;
 
-          Acc_x_SRAM[i_save] = Acc.x;
-          Acc_y_SRAM[i_save] = Acc.y;
-          Acc_z_SRAM[i_save] = Acc.z;
+          Acc_x_SRAM[i_save] = Acc_x;//Acc.x;
+          Acc_y_SRAM[i_save] = Acc_y;//Acc.y;
+          Acc_z_SRAM[i_save] = Acc_z;//Acc.z;
 
           i_save++;
         }
@@ -1537,6 +1572,10 @@ int main(void)
     Euler      = bno055_getVectorEuler();
     Gyro       = bno055_getVectorGyroscope();
     Acc        = bno055_getVectorAccelerometer();
+
+    // yaw = Euler.x;
+
+
     // Acc_Linear = bno055_getVectorLinearAccel();
     #endif
     /* USER CODE END WHILE */
