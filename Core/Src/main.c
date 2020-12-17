@@ -1,15 +1,15 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define angular_velocity_control
+// #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
-#define Enable_PD_controller_av
+// #define Enable_PD_controller_av
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control
 #define Enable_I2C
-#define Enable_Inertia_Identification
-// #define Enable_Inertia_Mass_Matrix_by_Lagrange
+// #define Enable_Inertia_Identification
+#define Enable_Inertia_Mass_Matrix_by_Lagrange
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
   ******************************************************************************
@@ -107,6 +107,7 @@ const float dt = 0.001;// Control sampling time [sec]
 uint16_t loop = 0;
 uint8_t mode = 0;
 uint8_t divide = 0;// Remainder when mode is divided by 3.
+uint8_t isFirst = 0;
 
 // * Encoder
 uint16_t cnt1 = 0;
@@ -451,9 +452,12 @@ float delta_dtheta2_pre = 0.0;
 float delta_dtheta3_pre = 0.0;
 float delta_dtheta4_pre = 0.0;
 
-float Kp_vv_x   = 5.0;// Gain for vehicle velocity control(Based on encoder) 10.0
-float Kp_vv_y   = 5.0;
-float Kp_vv_phi = 5.0;
+// float Kp_vv_x   = 5.0;
+// float Kp_vv_y   = 5.0;
+// float Kp_vv_phi = 5.0;
+#define Kp_vv_x 5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
+#define Kp_vv_y 5.0f
+#define Kp_vv_phi 5.0f
 
 float ddx_ref = 0.0;
 float ddy_ref = 0.0;
@@ -463,7 +467,7 @@ float ddphi_ref = 0.0;
 #define Kp_df_y 100.0f//0.1f 0.5
 #define Kp_df_phi 10000.0f//0.1f 5.0 100.0(1115-36)
 
-#define Kp_df 1.2f//0.2f
+#define Kp_df 5000.0f//1.2f//0.2f
 #define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
 float fx_ref = 0.0;
 float fy_ref = 0.0;
@@ -503,15 +507,15 @@ float tau_dob2_pre = 0.0;
 float tau_dob3_pre = 0.0;
 float tau_dob4_pre = 0.0;
 
-float tau_dis1_raw = 0.0;
-float tau_dis2_raw = 0.0;
-float tau_dis3_raw = 0.0;
-float tau_dis4_raw = 0.0;
+// float tau_dis1_raw = 0.0;
+// float tau_dis2_raw = 0.0;
+// float tau_dis3_raw = 0.0;
+// float tau_dis4_raw = 0.0;
 
-float tau_dis1_raw_pre = 0.0;
-float tau_dis2_raw_pre = 0.0;
-float tau_dis3_raw_pre = 0.0;
-float tau_dis4_raw_pre = 0.0;
+// float tau_dis1_raw_pre = 0.0;
+// float tau_dis2_raw_pre = 0.0;
+// float tau_dis3_raw_pre = 0.0;
+// float tau_dis4_raw_pre = 0.0;
 
 float i1_comp = 0.0;
 float i2_comp = 0.0;
@@ -579,6 +583,7 @@ float Acc_z = 0.0;
 
 // * Save variables in SRAM
 #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+float t_experiment = N_SRAM / 100.0;
 
 int i_save = 0;  // For "for sentences"
 int i_output = 0;// For displaying datas after experiment
@@ -778,15 +783,52 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         direc4 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim4);
 
         #ifdef Enable_Driving_Force_Control
-        if(t < 25.0){
-        vy_cmd = 0.5;// 0.4
+        // if(t < 25.0){
+        // vy_cmd = 0.5;// 0.4
+        // // vx_cmd = 0.3;
+        // // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
+        // }else if(t >= 25.0){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
+
         // vx_cmd = 0.3;
-        // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
-        }else if(t >= 25.0){
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // vy_cmd = 0.3;
+        dphi_cmd = 1.0;//10.0 / 6.0;//
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.5;
+        // }else if( t < 6.0 ){
+        //   vx_cmd = 0.5;
+        //   vy_cmd = 0.0;
+        // }else if( t < 9.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = -0.5;
+        // }else if( t < 12.0 ){
+        //   vx_cmd = -0.5;
+        //   vy_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.3;
+        // }else if( t < 6.0 ){
+        //   vx_cmd = 0.3;
+        //   vy_cmd = 0.0;
+        // }else if( t < 9.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = -0.3;
+        // }else if( t < 12.0 ){
+        //   vx_cmd = -0.3;
+        //   vy_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
+
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
         ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
@@ -813,10 +855,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Ki_df_integral4 = Ki_df_integral4 + Ki_df * dt * ( fd4_ref - fd_hat4 );
 
         // * P / PI
-        // vel1_ref_new = Kp_df * ( fd1_ref - fd_hat1 ) + Ki_df_integral1;
-        // vel2_ref_new = Kp_df * ( fd2_ref - fd_hat2 ) + Ki_df_integral2;
-        // vel3_ref_new = Kp_df * ( fd3_ref - fd_hat3 ) + Ki_df_integral3;
-        // vel4_ref_new = Kp_df * ( fd4_ref - fd_hat4 ) + Ki_df_integral4;
+        vel1_ref_new = Kp_df * ( fd1_ref - fd_hat1 ) + Ki_df_integral1;
+        vel2_ref_new = Kp_df * ( fd2_ref - fd_hat2 ) + Ki_df_integral2;
+        vel3_ref_new = Kp_df * ( fd3_ref - fd_hat3 ) + Ki_df_integral3;
+        vel4_ref_new = Kp_df * ( fd4_ref - fd_hat4 ) + Ki_df_integral4;
 
         // * I
         vel1_ref_new = Ki_df_integral1;
@@ -891,7 +933,41 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        vy_cmd = 0.5;
+        // vx_cmd = 0.3;
+        // vy_cmd = 0.3;
+        dphi_cmd = 1.0;//10.0 / 6.0;
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.5;
+        // }else if( t < 6.0 ){
+        //   vx_cmd = 0.5;
+        //   vy_cmd = 0.0;
+        // }else if( t < 9.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = -0.5;
+        // }else if( t < 12.0 ){
+        //   vx_cmd = -0.5;
+        //   vy_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.3;
+        // }else if( t < 6.0 ){
+        //   vx_cmd = 0.3;
+        //   vy_cmd = 0.0;
+        // }else if( t < 9.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = -0.3;
+        // }else if( t < 12.0 ){
+        //   vx_cmd = -0.3;
+        //   vy_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
 
         ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);
         ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);
@@ -1346,8 +1422,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		// 	printf("%d, ", mode);
 		// 	printf("\r\n");
 		// }
-
-		mode++;
+    if( t == 0.0 || t > t_experiment ){// 14.999
+		  mode++;
+    }
 		// printf("%d, ", mode);
 		// printf("\r\n");
 
@@ -1378,15 +1455,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
         // printf("1, %d, ", mode);
         // printf("\r\n");
 
-        tau_dfob1 = 0.0;
-        tau_dfob2 = 0.0;
-        tau_dfob3 = 0.0;
-        tau_dfob4 = 0.0;
+        if( isFirst == 0 ){
+          tau_dfob1 = 0.0;
+          tau_dfob2 = 0.0;
+          tau_dfob3 = 0.0;
+          tau_dfob4 = 0.0;
 
-        tau_dfob1_pre = 0.0;
-        tau_dfob1_pre = 0.0;
-        tau_dfob1_pre = 0.0;
-        tau_dfob1_pre = 0.0;
+          tau_dfob1_pre = 0.0;
+          tau_dfob1_pre = 0.0;
+          tau_dfob1_pre = 0.0;
+          tau_dfob1_pre = 0.0;
+
+          isFirst++;
+        }
+
 
         break;
       case 2:
@@ -1572,10 +1654,6 @@ int main(void)
     Euler      = bno055_getVectorEuler();
     Gyro       = bno055_getVectorGyroscope();
     Acc        = bno055_getVectorAccelerometer();
-
-    // yaw = Euler.x;
-
-
     // Acc_Linear = bno055_getVectorLinearAccel();
     #endif
     /* USER CODE END WHILE */
