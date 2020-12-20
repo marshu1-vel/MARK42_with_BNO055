@@ -4,9 +4,9 @@
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_PD_controller_av
-// #define Enable_Vehicle_Velocity_control
+#define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-#define Enable_Driving_Force_Control
+// #define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -467,7 +467,7 @@ float ddphi_ref = 0.0;
 #define Kp_df_y 100.0f//0.1f 0.5
 #define Kp_df_phi 10000.0f//0.1f 5.0 100.0(1115-36)
 
-#define Kp_df 5000.0f//1.2f//0.2f
+#define Kp_df 0.005f//5000.0f//1.2f//0.2f
 #define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
 float fx_ref = 0.0;
 float fy_ref = 0.0;
@@ -582,7 +582,8 @@ float Acc_z = 0.0;
 
 
 // * Save variables in SRAM
-#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+// #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 1000
 float t_experiment = N_SRAM / 100.0;
 
 int i_save = 0;  // For "for sentences"
@@ -741,8 +742,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         roll_rate  = Gyro.x;
         pitch_rate = Gyro.y;
 
-        Acc_x = Acc.x;
-        Acc_y = Acc.y;
+        Acc_x = -Acc.x;
+        Acc_y = -Acc.y;
         Acc_z = Acc.z;
 
         yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert degree to rad
@@ -794,8 +795,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // vx_cmd = 0.3;
-        // vy_cmd = 0.3;
-        dphi_cmd = 1.0;//10.0 / 6.0;//
+        // vy_cmd = 0.5;
+        // dphi_cmd = 1.0;//10.0 / 6.0;//
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.5;
+        // }else{
+        //   vy_cmd = 0.0;
+        // }
+
+        if( t < t_experiment ){
+          vy_cmd = 0.5;
+        }else{
+          vy_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -861,10 +874,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         vel4_ref_new = Kp_df * ( fd4_ref - fd_hat4 ) + Ki_df_integral4;
 
         // * I
-        vel1_ref_new = Ki_df_integral1;
-        vel2_ref_new = Ki_df_integral2;
-        vel3_ref_new = Ki_df_integral3;
-        vel4_ref_new = Ki_df_integral4;
+        // vel1_ref_new = Ki_df_integral1;
+        // vel2_ref_new = Ki_df_integral2;
+        // vel3_ref_new = Ki_df_integral3;
+        // vel4_ref_new = Ki_df_integral4;
 
         dtheta1_cmd = vel1_ref_new / Rw;
         dtheta2_cmd = vel2_ref_new / Rw;
@@ -934,8 +947,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // vx_cmd = 0.3;
-        // vy_cmd = 0.3;
-        dphi_cmd = 1.0;//10.0 / 6.0;
+        // vy_cmd = 0.5;
+        // dphi_cmd = 1.0;//10.0 / 6.0;
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.5;
+        // }else{
+        //   vy_cmd = 0.0;
+        // }
+
+        if( t < t_experiment ){
+          vx_cmd = 0.5;
+          // vy_cmd = 0.5;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1190,10 +1217,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           tau_dfob4_pre = tau_dfob4;
           // * Save previous values
         
-        fd_hat1 = tau_dfob1 / Rw;// [N] Element of fd's wheel rotation direction
-        fd_hat2 = tau_dfob2 / Rw;
-        fd_hat3 = tau_dfob3 / Rw;
-        fd_hat4 = tau_dfob4 / Rw;
+        // fd_hat1 = tau_dfob1 / Rw;// [N] Element of fd's wheel rotation direction
+        // fd_hat2 = tau_dfob2 / Rw;
+        // fd_hat3 = tau_dfob3 / Rw;
+        // fd_hat4 = tau_dfob4 / Rw;
+
+        fd_hat1 = tau_dfob1 / Rw * sqrt(2.0);// [N] Element of fd's wheel rotation direction
+        fd_hat2 = tau_dfob2 / Rw * sqrt(2.0);
+        fd_hat3 = tau_dfob3 / Rw * sqrt(2.0);
+        fd_hat4 = tau_dfob4 / Rw * sqrt(2.0);
 
         fx_hat = 1.0 / Rw             * (   tau_dfob1 - tau_dfob2 + tau_dfob3 - tau_dfob4 );
         fy_hat = 1.0 / Rw             * (   tau_dfob1 + tau_dfob2 + tau_dfob3 + tau_dfob4 );
