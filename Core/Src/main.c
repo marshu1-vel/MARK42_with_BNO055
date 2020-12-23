@@ -428,7 +428,7 @@ const float M44 = Gear * Gear * J4;
 
 // * Control Gains etc.
 #define Kp_av    20.0f// Gain for angular velocity control 100.0
-#define Kp_av_df 10.0f// Gain for Driving Force    control 10.0
+#define Kp_av_df 10.0f//10.0f// Gain for Driving Force    control 10.0
 #define Kp_av_4 5.0f
 float Kd_av = 0.08;//0.05;//2.0 * sqrt(Kp_av);
 #define G_LPF_D_av 50.0f// D controller of angular velocity control
@@ -455,9 +455,9 @@ float delta_dtheta4_pre = 0.0;
 // float Kp_vv_x   = 5.0;
 // float Kp_vv_y   = 5.0;
 // float Kp_vv_phi = 5.0;
-#define Kp_vv_x 5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
-#define Kp_vv_y 5.0f
-#define Kp_vv_phi 5.0f
+#define Kp_vv_x 1.75f//5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
+#define Kp_vv_y 1.75f//5.0f
+#define Kp_vv_phi 1.75f//5.0f
 
 float ddx_ref = 0.0;
 float ddy_ref = 0.0;
@@ -467,7 +467,7 @@ float ddphi_ref = 0.0;
 #define Kp_df_y 100.0f//0.1f 0.5
 #define Kp_df_phi 10000.0f//0.1f 5.0 100.0(1115-36)
 
-#define Kp_df 0.005f//5000.0f//1.2f//0.2f
+#define Kp_df 0.005f//0.005f//5000.0f//1.2f//0.2f
 #define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
 float fx_ref = 0.0;
 float fy_ref = 0.0;
@@ -507,10 +507,10 @@ float tau_dob2_pre = 0.0;
 float tau_dob3_pre = 0.0;
 float tau_dob4_pre = 0.0;
 
-// float tau_dis1_raw = 0.0;
-// float tau_dis2_raw = 0.0;
-// float tau_dis3_raw = 0.0;
-// float tau_dis4_raw = 0.0;
+float tau_dis1_raw = 0.0;// Raw data (Without LPF)
+float tau_dis2_raw = 0.0;
+float tau_dis3_raw = 0.0;
+float tau_dis4_raw = 0.0;
 
 // float tau_dis1_raw_pre = 0.0;
 // float tau_dis2_raw_pre = 0.0;
@@ -535,6 +535,11 @@ float tau_dfob1_pre = 0.0;
 float tau_dfob2_pre = 0.0;
 float tau_dfob3_pre = 0.0;
 float tau_dfob4_pre = 0.0;
+
+float tau_dfob1_raw = 0.0;// Raw data (Without LPF)
+float tau_dfob2_raw = 0.0;
+float tau_dfob3_raw = 0.0;
+float tau_dfob4_raw = 0.0;
 
 float integral_tau_dfob1 = 0.0;
 float integral_tau_dfob2 = 0.0;
@@ -575,6 +580,17 @@ float yaw_rate = 0.0;
 float roll_rate = 0.0;
 float pitch_rate = 0.0;
 
+float yaw_rate_pre  = 0.0;
+float yaw_rate_pre2 = 0.0;
+
+float yaw_rate_notch      = 0.0;
+float yaw_rate_notch_pre  = 0.0;
+float yaw_rate_notch_pre2 = 0.0;
+
+#define zeta1 1.0f // Inverse of Q value
+#define N_roller 9.0f // Number of free roller
+float G_notch1 = 90.0; // [rad/sec]
+
 float Acc_x = 0.0;
 float Acc_y = 0.0;
 float Acc_z = 0.0;
@@ -584,7 +600,8 @@ float Acc_z = 0.0;
 // * Save variables in SRAM
 // #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 #define N_SRAM 1000
-float t_experiment = N_SRAM / 100.0;
+// float t_experiment = N_SRAM / 100.0;
+#define t_experiment N_SRAM / 100.0f
 
 int i_save = 0;  // For "for sentences"
 int i_output = 0;// For displaying datas after experiment
@@ -667,6 +684,8 @@ float yaw_rate_SRAM[N_SRAM] = {};
 float roll_rate_SRAM[N_SRAM] = {};
 float pitch_rate_SRAM[N_SRAM] = {};
 
+float yaw_rate_notch_SRAM[N_SRAM] = {};
+
 float Acc_x_SRAM[N_SRAM] = {};
 float Acc_y_SRAM[N_SRAM] = {};
 float Acc_z_SRAM[N_SRAM] = {};
@@ -739,20 +758,42 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         pitch = Euler.z;
 
         yaw_rate   = Gyro.z;// [dps : degree/sec]
-        roll_rate  = Gyro.x;
-        pitch_rate = Gyro.y;
+        roll_rate  = Gyro.y;//Gyro.x;
+        pitch_rate = Gyro.x;//Gyro.y;
 
-        Acc_x = -Acc.x;
-        Acc_y = -Acc.y;
+        Acc_x = -Acc.x;// Adjust these values to Vehicle coordinate system of modeling
+        Acc_y = -Acc.y;// Direction is opposite, due to inertial force
         Acc_z = Acc.z;
 
         yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert degree to rad
         roll  = roll  * 2.0 * pi / 360.0;
         pitch = pitch * 2.0 * pi / 360.0;
 
-        yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;
+        yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;// ! Direction is not confirmed yet.
         roll_rate  = roll_rate  * 2.0 * pi / 360.0;
         pitch_rate = pitch_rate * 2.0 * pi / 360.0;
+
+        // if( vy_cmd > 0.0 ){
+        //   G_notch1 = N_roller * ( dtheta1_cmd + dtheta2_cmd + dtheta3_cmd + dtheta4_cmd ) / 4.0;
+        // }else if( vx_cmd > 0.0 ){
+        //   G_notch1 = N_roller * ( dtheta1_cmd - dtheta2_cmd + dtheta3_cmd - dtheta4_cmd ) / 4.0;
+        // }
+
+        // G_notch1 = 90.0;
+
+        // printf("%f", G_notch1);
+        // printf("\r\n");
+
+        // * Notch Filter ( Band-stop Filter ) : Back Difference
+        yaw_rate_notch = 1.0 / ( 1.0 + 2.0*zeta1*G_notch1*dt + G_notch1*G_notch1*dt*dt ) * ( 2.0*(1.0+zeta1*G_notch1*dt)*yaw_rate_notch_pre - yaw_rate_notch_pre2 + (1.0 + G_notch1*G_notch1*dt*dt)*yaw_rate - 2.0*yaw_rate_pre + yaw_rate_pre2 );
+        // * Notch Filter ( Band-stop Filter ) : Back Difference
+
+        // * Save previous values
+        yaw_rate_pre2       = yaw_rate_pre;
+        yaw_rate_pre        = yaw_rate;
+        yaw_rate_notch_pre2 = yaw_rate_notch_pre;
+        yaw_rate_notch_pre  = yaw_rate_notch;
+        // * Save previous values
 
         if     ( yaw - yaw_pre > 2.0*pi/2.0 ) yaw_digit--;
         else if( yaw_pre - yaw > 2.0*pi/2.0 ) yaw_digit++;
@@ -772,7 +813,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         vx_res = (Rw / 4.0) * (dtheta1_res - dtheta2_res + dtheta3_res - dtheta4_res);// [m/sec]
         vy_res = (Rw / 4.0) * (dtheta1_res + dtheta2_res + dtheta3_res + dtheta4_res);
-        dphi_res = (Rw / 4.0) / (W + L) * ( - dtheta1_res - dtheta2_res + dtheta3_res + dtheta4_res);// [rad/sec]
+        // dphi_res = (Rw / 4.0) / (W + L) * ( - dtheta1_res - dtheta2_res + dtheta3_res + dtheta4_res);// [rad/sec]
+
+        dphi_res = yaw_rate;
+        // dphi_res = yaw_rate_notch;
 
         x_res   += vx_res   * dt;// [m]
         y_res   += vy_res   * dt;
@@ -957,8 +1001,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         if( t < t_experiment ){
-          vx_cmd = 0.5;
-          // vy_cmd = 0.5;
+          // vx_cmd = 0.5;
+          vy_cmd = 0.5;
         }else{
           vx_cmd = 0.0;
           vy_cmd = 0.0;
@@ -1094,10 +1138,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef Enable_Inertia_Mass_Matrix_by_Lagrange
-        i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
-        i2_ref = (M21*ddtheta1_ref + M22*ddtheta2_ref + M23*ddtheta3_ref + M24*ddtheta4_ref)/( Gear * Ktn );
-        i3_ref = (M31*ddtheta1_ref + M32*ddtheta2_ref + M33*ddtheta3_ref + M34*ddtheta4_ref)/( Gear * Ktn );
-        i4_ref = (M41*ddtheta1_ref + M42*ddtheta2_ref + M43*ddtheta3_ref + M44*ddtheta4_ref)/( Gear * Ktn );
+        // i1_ref = (M11*ddtheta1_ref + M12*ddtheta2_ref + M13*ddtheta3_ref + M14*ddtheta4_ref)/( Gear * Ktn );
+        // i2_ref = (M21*ddtheta1_ref + M22*ddtheta2_ref + M23*ddtheta3_ref + M24*ddtheta4_ref)/( Gear * Ktn );
+        // i3_ref = (M31*ddtheta1_ref + M32*ddtheta2_ref + M33*ddtheta3_ref + M34*ddtheta4_ref)/( Gear * Ktn );
+        // i4_ref = (M41*ddtheta1_ref + M42*ddtheta2_ref + M43*ddtheta3_ref + M44*ddtheta4_ref)/( Gear * Ktn );
+
+        i1_ref = M11*ddtheta1_ref / ( Gear * Ktn );
+        i2_ref = M22*ddtheta2_ref / ( Gear * Ktn );
+        i3_ref = M33*ddtheta3_ref / ( Gear * Ktn );
+        i4_ref = M44*ddtheta4_ref / ( Gear * Ktn );
         #endif
 
         #ifdef Enable_Inertia_Identification
@@ -1110,6 +1159,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef Enable_DOB
+
+        // * Raw data ( Without LPF )
+        // tau_dis1_raw = Gear * Ktn * i1_ref - 
+        // * Raw data ( Without LPF )
 
         // * Bilinear Transform / Tustin Transform
         // tau_dob1 = 1.0 / (2.0 + G_DOB * dt) * ( (2.0 - G_DOB * dt)*tau_dob1_pre + G_DOB * dt * Gear * Ktn * ( ia1_ref + ia1_ref_pre ) - 2.0 * G_DOB * M11 * ( dtheta1_res - dtheta1_res_pre ) );
@@ -1425,6 +1478,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           pitch_SRAM[i_save] = pitch;//Euler.z;
 
           yaw_rate_SRAM[i_save]   = yaw_rate;//Gyro.z;
+
+          yaw_rate_notch_SRAM[i_save]  = yaw_rate_notch;
+
           roll_rate_SRAM[i_save]  = roll_rate;//Gyro.x;
           pitch_rate_SRAM[i_save] = pitch_rate;//Gyro.y;
 
@@ -1587,6 +1643,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", pitch_SRAM[i_output]);
 
           printf("%f, ", yaw_rate_SRAM[i_output]);
+          printf("%f, ", yaw_rate_notch_SRAM[i_output]);
+
           printf("%f, ", roll_rate_SRAM[i_output]);
           printf("%f, ", pitch_rate_SRAM[i_output]);
 
