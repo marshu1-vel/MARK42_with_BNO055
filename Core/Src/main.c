@@ -4,9 +4,9 @@
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_PD_controller_av
-#define Enable_Vehicle_Velocity_control
+// #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -1000,29 +1000,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   vy_cmd = 0.0;
         // }
 
-        if( t < t_experiment ){
-          // vx_cmd = 0.5;
-          vy_cmd = 0.5;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-        }
-
-        // if( t < 3.0 ){
+        // if( t < t_experiment ){
+        //   // vx_cmd = 0.5;
         //   vy_cmd = 0.5;
-        // }else if( t < 6.0 ){
-        //   vx_cmd = 0.5;
-        //   vy_cmd = 0.0;
-        // }else if( t < 9.0 ){
-        //   vx_cmd = 0.0;
-        //   vy_cmd = -0.5;
-        // }else if( t < 12.0 ){
-        //   vx_cmd = -0.5;
-        //   vy_cmd = 0.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
         // }
+
+        if( t < 3.0 ){
+          vy_cmd = 0.5;
+        }else if( t < 6.0 ){
+          vx_cmd = 0.5;
+          vy_cmd = 0.0;
+        }else if( t < 9.0 ){
+          vx_cmd = 0.0;
+          vy_cmd = -0.5;
+        }else if( t < 12.0 ){
+          vx_cmd = -0.5;
+          vy_cmd = 0.0;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.3;
