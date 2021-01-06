@@ -4,9 +4,9 @@
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_PD_controller_av
-// #define Enable_Vehicle_Velocity_control
+#define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-#define Enable_Driving_Force_Control
+// #define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -691,6 +691,23 @@ float Acc_y_SRAM[N_SRAM] = {};
 float Acc_z_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
+// * Command
+float omega = 0.0;// [rad/sec] 
+float r = 0.0;// [m] : Turning radius of steady circle turning
+float A = 0.0;// [m] : Amplitude of sin wave movement
+// * Command
+
+// * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
+float T_hat_11 = 0.0;
+float T_hat_12 = 0.0;
+
+float T_hat_11_Z1 = 0.0;
+float T_hat_12_Z1 = 0.0;
+
+float P_11    = 0.0;
+float P_11_Z1 = 0.0;
+// * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
+
 
 // * fprintf
 FILE *outputfile;
@@ -811,6 +828,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         dtheta3_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta3_res_pre + 2.0 * G_LPF * (theta3_res - theta3_res_pre) );
         dtheta4_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta4_res_pre + 2.0 * G_LPF * (theta4_res - theta4_res_pre) );
 
+        // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
+
+
+
+        
+        // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
+
+
         vx_res = (Rw / 4.0) * (dtheta1_res - dtheta2_res + dtheta3_res - dtheta4_res);// [m/sec]
         vy_res = (Rw / 4.0) * (dtheta1_res + dtheta2_res + dtheta3_res + dtheta4_res);
         // dphi_res = (Rw / 4.0) / (W + L) * ( - dtheta1_res - dtheta2_res + dtheta3_res + dtheta4_res);// [rad/sec]
@@ -827,30 +852,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         direc3 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8);
         direc4 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim4);
 
-        #ifdef Enable_Driving_Force_Control
-        // if(t < 25.0){
-        // vy_cmd = 0.5;// 0.4
-        // // vx_cmd = 0.3;
-        // // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
-        // }else if(t >= 25.0){
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
-
-        // vx_cmd = 0.3;
-        // vy_cmd = 0.5;
-        // dphi_cmd = 1.0;//10.0 / 6.0;//
-
-        // if( t < 3.0 ){
-        //   vy_cmd = 0.5;
-        // }else{
-        //   vy_cmd = 0.0;
-        // }
+        // * Command
 
         if( t < t_experiment ){
-          vy_cmd = 0.5;
+          // vx_cmd = 0.5;
+          vy_cmd = -0.5;
         }else{
+          vx_cmd = 0.0;
           vy_cmd = 0.0;
         }
 
@@ -884,6 +892,69 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
+        // }
+        
+        // ! --1-- : Steady circle turning without changing posture of vehicle
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.8;
+
+        // if(t < t_experiment){
+        //   vx_cmd   = - r * omega * sin(omega * t);
+        //   vy_cmd   =   r * omega * cos(omega * t);
+        //   dphi_cmd = 0.0;
+        // }
+
+        // ! --2-- : Steady circle turning while pointing the head toward center of trajectory
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.8;
+        
+        // if(t < t_experiment){
+        //   vx_cmd   = - r * omega;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = omega;
+        // }
+
+        // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.8;
+
+        // if(t < t_experiment){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = r * omega;
+        //   dphi_cmd = omega;
+        // }
+
+        // ! --4-- : Sin wave movement without changing posture of vehicle
+        // omega = 0.3;// Period T is 2pi / omega
+        // A = 0.8;
+        
+        // if(t < t_experiment){
+        //   vx_cmd   = omega;
+        //   vy_cmd   = A * omega * cos(omega * t);
+        //   dphi_cmd = 0.0;
+        // }
+        
+        // ! --5-- : Sin wave movement while changing posture of vehicle : Not work well
+        // ! Not work well
+        // omega = 0.2;// Period T is 2pi / omega
+        // A = 0.6;
+
+        // if(t < t_experiment){
+        //   vx_cmd   = omega * sin(omega*t + pi / 4.0) - A*omega*cos(omega*t)*cos(omega*t + pi / 4.0);
+        //   vy_cmd   = omega * cos(omega*t + pi / 4.0) + A*omega*cos(omega*t)*sin(omega*t + pi / 4.0);
+        //   dphi_cmd = - pi / 4.0 * sin(omega*t);
+        // }
+        // * Command
+
+        #ifdef Enable_Driving_Force_Control
+        // if(t < 25.0){
+        // vy_cmd = 0.5;// 0.4
+        // // vx_cmd = 0.3;
+        // // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
+        // }else if(t >= 25.0){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
         // }
 
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
@@ -990,56 +1061,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        // vx_cmd = 0.3;
-        // vy_cmd = 0.5;
-        // dphi_cmd = 1.0;//10.0 / 6.0;
-
-        // if( t < 3.0 ){
-        //   vy_cmd = 0.5;
-        // }else{
-        //   vy_cmd = 0.0;
-        // }
-
-        // if( t < t_experiment ){
-        //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        // }
-
-        if( t < 3.0 ){
-          vy_cmd = 0.5;
-        }else if( t < 6.0 ){
-          vx_cmd = 0.5;
-          vy_cmd = 0.0;
-        }else if( t < 9.0 ){
-          vx_cmd = 0.0;
-          vy_cmd = -0.5;
-        }else if( t < 12.0 ){
-          vx_cmd = -0.5;
-          vy_cmd = 0.0;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-        }
-
-        // if( t < 3.0 ){
-        //   vy_cmd = 0.3;
-        // }else if( t < 6.0 ){
-        //   vx_cmd = 0.3;
-        //   vy_cmd = 0.0;
-        // }else if( t < 9.0 ){
-        //   vx_cmd = 0.0;
-        //   vy_cmd = -0.3;
-        // }else if( t < 12.0 ){
-        //   vx_cmd = -0.3;
-        //   vy_cmd = 0.0;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        // }
-
         ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);
         ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);
         ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res);
@@ -1052,7 +1073,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef angular_velocity_control
         // Convert Local to Joint space
-        // Jacobi T matirix (including "Rw")
+        // Jacobi T matrix (including "Rw")
 
         // * For angular acceleration experiment
         // if(t < 5.0){
@@ -1350,39 +1371,39 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // if(loop % 1000 == 0){
         // printf("%.3f, ", t);
 
-    //		printf("%d, ", cnt1);
-    //		printf("%d, ", cnt2);
-    //		printf("%d, ", cnt3);
-    //		printf("%d, ", cnt4);
+    		// printf("%d, ", cnt1);
+    		// printf("%d, ", cnt2);
+    		// printf("%d, ", cnt3);
+    		// printf("%d, ", cnt4);
 
-    //		printf("%d, ", digit1);
-    //		printf("%d, ", digit2);
-    //		printf("%d, ", digit3);
-    //		printf("%d, ", digit4);
+    		// printf("%d, ", digit1);
+    		// printf("%d, ", digit2);
+    		// printf("%d, ", digit3);
+    		// printf("%d, ", digit4);
 
-    //		printf("%f, ", theta1_res);
-    //		printf("%f, ", theta2_res);
-    //		printf("%f, ", theta3_res);
-    //		printf("%f, ", theta4_res);
+    		// printf("%f, ", theta1_res);
+    		// printf("%f, ", theta2_res);
+    		// printf("%f, ", theta3_res);
+    		// printf("%f, ", theta4_res);
 
-    //		printf("%f, ", a);
-    //		printf("%f, ", b);
+    		// printf("%f, ", a);
+    		// printf("%f, ", b);
 
-    //		printf("%.8f, ", J1);
-    //		printf("%f, ", M11);
-    //		printf("%f, ", M12);
-    //		printf("%f, ", M13);
-    //		printf("%f, ", M14);
+    		// printf("%.8f, ", J1);
+    		// printf("%f, ", M11);
+    		// printf("%f, ", M12);
+    		// printf("%f, ", M13);
+    		// printf("%f, ", M14);
 
         // printf("%.3f, ", theta1_res);
         // printf("%.3f, ", theta2_res);
         // printf("%.3f, ", theta3_res);
         // printf("%.3f, ", theta4_res);
 
-    //		printf("%.3f, ", dtheta1_res_raw);
-    //		printf("%.3f, ", dtheta2_res_raw);
-    //		printf("%.3f, ", dtheta3_res_raw);
-    //		printf("%.3f, ", dtheta4_res_raw);
+    		// printf("%.3f, ", dtheta1_res_raw);
+    		// printf("%.3f, ", dtheta2_res_raw);
+    		// printf("%.3f, ", dtheta3_res_raw);
+    		// printf("%.3f, ", dtheta4_res_raw);
 
         // printf("%.3f, ", dtheta1_res);
         // printf("%.3f, ", dtheta2_res);
