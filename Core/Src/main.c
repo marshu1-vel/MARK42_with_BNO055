@@ -599,7 +599,7 @@ float Acc_z = 0.0;
 
 // * Save variables in SRAM
 // #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-#define N_SRAM 1000
+#define N_SRAM 500
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -856,7 +856,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         if( t < t_experiment ){
           // vx_cmd = 0.5;
-          vy_cmd = -0.5;
+          vy_cmd = 0.5;
         }else{
           vx_cmd = 0.0;
           vy_cmd = 0.0;
@@ -1220,10 +1220,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_DFOB
         // if(direc1==0)
-        tau_dfob1 = integral_tau_dfob1 - M11 * G_DFOB * dtheta1_res;// * Continuous
-        tau_dfob2 = integral_tau_dfob2 - M22 * G_DFOB * dtheta2_res;// * Continuous
-        tau_dfob3 = integral_tau_dfob3 - M33 * G_DFOB * dtheta3_res;// * Continuous
-        tau_dfob4 = integral_tau_dfob4 - M44 * G_DFOB * dtheta4_res;// * Continuous
+        // tau_dfob1 = integral_tau_dfob1 - M11 * G_DFOB * dtheta1_res;// * Continuous
+        // tau_dfob2 = integral_tau_dfob2 - M22 * G_DFOB * dtheta2_res;// * Continuous
+        // tau_dfob3 = integral_tau_dfob3 - M33 * G_DFOB * dtheta3_res;// * Continuous
+        // tau_dfob4 = integral_tau_dfob4 - M44 * G_DFOB * dtheta4_res;// * Continuous
+
+        // * Withdraw Non diagonal elements
+        tau_dfob1 = integral_tau_dfob1 - M11 * G_DFOB * dtheta1_res - M12 * G_DFOB * dtheta2_res - M13 * G_DFOB * dtheta3_res - M14 * G_DFOB * dtheta4_res;// * Continuous
+        tau_dfob2 = integral_tau_dfob2 - M21 * G_DFOB * dtheta1_res - M22 * G_DFOB * dtheta2_res - M23 * G_DFOB * dtheta3_res - M24 * G_DFOB * dtheta4_res;// * Continuous
+        tau_dfob3 = integral_tau_dfob3 - M31 * G_DFOB * dtheta1_res - M32 * G_DFOB * dtheta2_res - M33 * G_DFOB * dtheta3_res - M34 * G_DFOB * dtheta4_res;// * Continuous
+        tau_dfob4 = integral_tau_dfob4 - M41 * G_DFOB * dtheta1_res - M42 * G_DFOB * dtheta2_res - M43 * G_DFOB * dtheta3_res - M44 * G_DFOB * dtheta4_res;// * Continuous
 
         switch(direc1){
           case 0:
@@ -1271,10 +1277,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // * Identification of F & D
 
         // * Continuous
-        integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - tau_fric1 - integral_tau_dfob1) * G_DFOB * dt;
-        integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - tau_fric2 - integral_tau_dfob2) * G_DFOB * dt;
-        integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - tau_fric3 - integral_tau_dfob3) * G_DFOB * dt;
-        integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - tau_fric4 - integral_tau_dfob4) * G_DFOB * dt;
+        // integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11 * G_DFOB * dtheta1_res - tau_fric1 - integral_tau_dfob1) * G_DFOB * dt;
+        // integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M22 * G_DFOB * dtheta2_res - tau_fric2 - integral_tau_dfob2) * G_DFOB * dt;
+        // integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M33 * G_DFOB * dtheta3_res - tau_fric3 - integral_tau_dfob3) * G_DFOB * dt;
+        // integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M44 * G_DFOB * dtheta4_res - tau_fric4 - integral_tau_dfob4) * G_DFOB * dt;
+
+        integral_tau_dfob1 = integral_tau_dfob1 + ( Gear * Ktn * ia1_ref + M11*G_DFOB*dtheta1_res + M12*G_DFOB*dtheta2_res + M13*G_DFOB*dtheta3_res + M14*G_DFOB*dtheta4_res - tau_fric1 - integral_tau_dfob1) * G_DFOB * dt;
+        integral_tau_dfob2 = integral_tau_dfob2 + ( Gear * Ktn * ia2_ref + M21*G_DFOB*dtheta1_res + M22*G_DFOB*dtheta2_res + M23*G_DFOB*dtheta3_res + M24*G_DFOB*dtheta4_res - tau_fric2 - integral_tau_dfob2) * G_DFOB * dt;
+        integral_tau_dfob3 = integral_tau_dfob3 + ( Gear * Ktn * ia3_ref + M31*G_DFOB*dtheta1_res + M32*G_DFOB*dtheta2_res + M33*G_DFOB*dtheta3_res + M34*G_DFOB*dtheta4_res - tau_fric3 - integral_tau_dfob3) * G_DFOB * dt;
+        integral_tau_dfob4 = integral_tau_dfob4 + ( Gear * Ktn * ia4_ref + M41*G_DFOB*dtheta1_res + M42*G_DFOB*dtheta2_res + M43*G_DFOB*dtheta3_res + M44*G_DFOB*dtheta4_res - tau_fric4 - integral_tau_dfob4) * G_DFOB * dt;
         // * Continuous
 
         // * Backward Difference : Not work well
