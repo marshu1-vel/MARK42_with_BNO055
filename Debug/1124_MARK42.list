@@ -21,9 +21,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   8 .data         000001f8  20000000  0800be20  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          000187ec  200001f8  0800c018  000201f8  2**3
+  9 .bss          000306bc  200001f8  0800c018  000201f8  2**3
                   ALLOC
- 10 ._user_heap_stack 00000604  200189e4  0800c018  000289e4  2**0
+ 10 ._user_heap_stack 00000604  200308b4  0800c018  000208b4  2**0
                   ALLOC
  11 .ARM.attributes 0000002e  00000000  00000000  000201f8  2**0
                   CONTENTS, READONLY
@@ -39,9 +39,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000ff2a  00000000  00000000  00067f1c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    00100fac  00000000  00000000  00077e46  2**0
+ 18 .debug_str    00100fad  00000000  00000000  00077e46  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  00178df2  2**0
+ 19 .comment      0000007b  00000000  00000000  00178df3  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00006694  00000000  00000000  00178e70  2**2
                   CONTENTS, READONLY, DEBUGGING
@@ -945,7 +945,7 @@ void bno055_assignI2C(I2C_HandleTypeDef *hi2c_device) {
  8000a68:	f85d 7b04 	ldr.w	r7, [sp], #4
  8000a6c:	4770      	bx	lr
  8000a6e:	bf00      	nop
- 8000a70:	20018810 	.word	0x20018810
+ 8000a70:	200306e0 	.word	0x200306e0
 
 08000a74 <bno055_delay>:
 
@@ -1203,7 +1203,7 @@ void bno055_writeData(uint8_t reg, uint8_t data) {
  8000c0a:	3718      	adds	r7, #24
  8000c0c:	46bd      	mov	sp, r7
  8000c0e:	bd80      	pop	{r7, pc}
- 8000c10:	20018810 	.word	0x20018810
+ 8000c10:	200306e0 	.word	0x200306e0
  8000c14:	0800b924 	.word	0x0800b924
  8000c18:	0800b948 	.word	0x0800b948
  8000c1c:	0800b970 	.word	0x0800b970
@@ -1265,7 +1265,7 @@ void bno055_readData(uint8_t reg, uint8_t *data, uint8_t len) {
  8000c9e:	3708      	adds	r7, #8
  8000ca0:	46bd      	mov	sp, r7
  8000ca2:	bd80      	pop	{r7, pc}
- 8000ca4:	20018810 	.word	0x20018810
+ 8000ca4:	200306e0 	.word	0x200306e0
 
 08000ca8 <__io_putchar>:
   * @brief  Retargets the C library printf function to the USART.
@@ -1294,7 +1294,7 @@ PUTCHAR_PROTOTYPE
  8000cc2:	3708      	adds	r7, #8
  8000cc4:	46bd      	mov	sp, r7
  8000cc6:	bd80      	pop	{r7, pc}
- 8000cc8:	20018340 	.word	0x20018340
+ 8000cc8:	20030210 	.word	0x20030210
  8000ccc:	00000000 	.word	0x00000000
 
 08000cd0 <HAL_TIM_PeriodElapsedCallback>:
@@ -1530,8 +1530,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8000e88:	200002ba 	.word	0x200002ba
  8000e8c:	200002bc 	.word	0x200002bc
  8000e90:	200002be 	.word	0x200002be
- 8000e94:	20018814 	.word	0x20018814
- 8000e98:	200188f8 	.word	0x200188f8
+ 8000e94:	200306e4 	.word	0x200306e4
+ 8000e98:	200307c8 	.word	0x200307c8
  8000e9c:	40010000 	.word	0x40010000
  8000ea0:	2000021e 	.word	0x2000021e
  8000ea4:	40000400 	.word	0x40000400
@@ -1850,15 +1850,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8001280:	20000230 	.word	0x20000230
  8001284:	20000240 	.word	0x20000240
  8001288:	20000244 	.word	0x20000244
- 800128c:	20018898 	.word	0x20018898
+ 800128c:	20030768 	.word	0x20030768
  8001290:	20000398 	.word	0x20000398
  8001294:	2000039c 	.word	0x2000039c
  8001298:	200003a0 	.word	0x200003a0
- 800129c:	20018998 	.word	0x20018998
+ 800129c:	20030868 	.word	0x20030868
  80012a0:	200003ac 	.word	0x200003ac
  80012a4:	200003b0 	.word	0x200003b0
  80012a8:	200003b4 	.word	0x200003b4
- 80012ac:	20018938 	.word	0x20018938
+ 80012ac:	20030808 	.word	0x20030808
  80012b0:	200003cc 	.word	0x200003cc
  80012b4:	200003d0 	.word	0x200003d0
  80012b8:	200003d4 	.word	0x200003d4
@@ -2266,11 +2266,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  80017c4:	200002d8 	.word	0x200002d8
  80017c8:	200002dc 	.word	0x200002dc
  80017cc:	20000010 	.word	0x20000010
- 80017d0:	200188b8 	.word	0x200188b8
+ 80017d0:	20030788 	.word	0x20030788
  80017d4:	20000232 	.word	0x20000232
- 80017d8:	20018854 	.word	0x20018854
+ 80017d8:	20030724 	.word	0x20030724
  80017dc:	20000233 	.word	0x20000233
- 80017e0:	200182c0 	.word	0x200182c0
+ 80017e0:	20030190 	.word	0x20030190
  80017e4:	4b0e      	ldr	r3, [pc, #56]	; (8001820 <HAL_TIM_PeriodElapsedCallback+0xb50>)
  80017e6:	701a      	strb	r2, [r3, #0]
         direc4 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim4);
@@ -2289,7 +2289,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         if( t < t_experiment ){
  8001802:	4b0a      	ldr	r3, [pc, #40]	; (800182c <HAL_TIM_PeriodElapsedCallback+0xb5c>)
  8001804:	edd3 7a00 	vldr	s15, [r3]
- 8001808:	eeb1 7a04 	vmov.f32	s14, #20	; 0x40a00000  5.0
+ 8001808:	eeb2 7a04 	vmov.f32	s14, #36	; 0x41200000  10.0
  800180c:	eef4 7ac7 	vcmpe.f32	s15, s14
  8001810:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8001814:	d50e      	bpl.n	8001834 <HAL_TIM_PeriodElapsedCallback+0xb64>
@@ -2299,7 +2299,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  800181c:	601a      	str	r2, [r3, #0]
  800181e:	e011      	b.n	8001844 <HAL_TIM_PeriodElapsedCallback+0xb74>
  8001820:	20000234 	.word	0x20000234
- 8001824:	20018300 	.word	0x20018300
+ 8001824:	200301d0 	.word	0x200301d0
  8001828:	20000235 	.word	0x20000235
  800182c:	20000214 	.word	0x20000214
  8001830:	200002c4 	.word	0x200002c4
@@ -3796,7 +3796,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8002a40:	f040 82a7 	bne.w	8002f92 <HAL_TIM_PeriodElapsedCallback+0x22c2>
  8002a44:	4b54      	ldr	r3, [pc, #336]	; (8002b98 <HAL_TIM_PeriodElapsedCallback+0x1ec8>)
  8002a46:	681b      	ldr	r3, [r3, #0]
- 8002a48:	f5b3 7ffa 	cmp.w	r3, #500	; 0x1f4
+ 8002a48:	f5b3 7f7a 	cmp.w	r3, #1000	; 0x3e8
  8002a4c:	f280 82a1 	bge.w	8002f92 <HAL_TIM_PeriodElapsedCallback+0x22c2>
           t_SRAM[i_save] = t;
  8002a50:	4b51      	ldr	r3, [pc, #324]	; (8002b98 <HAL_TIM_PeriodElapsedCallback+0x1ec8>)
@@ -3898,8 +3898,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8002b1c:	200002a0 	.word	0x200002a0
  8002b20:	200002bc 	.word	0x200002bc
  8002b24:	200002be 	.word	0x200002be
- 8002b28:	20018814 	.word	0x20018814
- 8002b2c:	200188f8 	.word	0x200188f8
+ 8002b28:	200306e4 	.word	0x200306e4
+ 8002b2c:	200307c8 	.word	0x200307c8
  8002b30:	20000238 	.word	0x20000238
  8002b34:	20000248 	.word	0x20000248
  8002b38:	2000023c 	.word	0x2000023c
@@ -3929,14 +3929,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8002b98:	200003d8 	.word	0x200003d8
  8002b9c:	20000214 	.word	0x20000214
  8002ba0:	200003e0 	.word	0x200003e0
- 8002ba4:	20000bb0 	.word	0x20000bb0
- 8002ba8:	20001380 	.word	0x20001380
- 8002bac:	20001b50 	.word	0x20001b50
- 8002bb0:	20002320 	.word	0x20002320
- 8002bb4:	20002af0 	.word	0x20002af0
- 8002bb8:	200032c0 	.word	0x200032c0
- 8002bbc:	20003a90 	.word	0x20003a90
- 8002bc0:	20004260 	.word	0x20004260
+ 8002ba4:	20001380 	.word	0x20001380
+ 8002ba8:	20002320 	.word	0x20002320
+ 8002bac:	200032c0 	.word	0x200032c0
+ 8002bb0:	20004260 	.word	0x20004260
+ 8002bb4:	20005200 	.word	0x20005200
+ 8002bb8:	200061a0 	.word	0x200061a0
+ 8002bbc:	20007140 	.word	0x20007140
+ 8002bc0:	200080e0 	.word	0x200080e0
           ddtheta1_ref_SRAM[i_save] = ddtheta1_ref;
  8002bc4:	4b90      	ldr	r3, [pc, #576]	; (8002e08 <HAL_TIM_PeriodElapsedCallback+0x2138>)
  8002bc6:	681b      	ldr	r3, [r3, #0]
@@ -4262,77 +4262,77 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8002e06:	bf00      	nop
  8002e08:	200003d8 	.word	0x200003d8
  8002e0c:	20000278 	.word	0x20000278
- 8002e10:	20004a30 	.word	0x20004a30
+ 8002e10:	20009080 	.word	0x20009080
  8002e14:	2000027c 	.word	0x2000027c
- 8002e18:	20005200 	.word	0x20005200
+ 8002e18:	2000a020 	.word	0x2000a020
  8002e1c:	20000280 	.word	0x20000280
- 8002e20:	200059d0 	.word	0x200059d0
+ 8002e20:	2000afc0 	.word	0x2000afc0
  8002e24:	20000284 	.word	0x20000284
- 8002e28:	200061a0 	.word	0x200061a0
+ 8002e28:	2000bf60 	.word	0x2000bf60
  8002e2c:	20000288 	.word	0x20000288
- 8002e30:	20006970 	.word	0x20006970
+ 8002e30:	2000cf00 	.word	0x2000cf00
  8002e34:	2000028c 	.word	0x2000028c
- 8002e38:	20007140 	.word	0x20007140
+ 8002e38:	2000dea0 	.word	0x2000dea0
  8002e3c:	20000290 	.word	0x20000290
- 8002e40:	20007910 	.word	0x20007910
+ 8002e40:	2000ee40 	.word	0x2000ee40
  8002e44:	20000294 	.word	0x20000294
- 8002e48:	200080e0 	.word	0x200080e0
+ 8002e48:	2000fde0 	.word	0x2000fde0
  8002e4c:	20000298 	.word	0x20000298
- 8002e50:	200088b0 	.word	0x200088b0
+ 8002e50:	20010d80 	.word	0x20010d80
  8002e54:	2000029c 	.word	0x2000029c
- 8002e58:	20009080 	.word	0x20009080
+ 8002e58:	20011d20 	.word	0x20011d20
  8002e5c:	200002a0 	.word	0x200002a0
- 8002e60:	20009850 	.word	0x20009850
+ 8002e60:	20012cc0 	.word	0x20012cc0
  8002e64:	200002a4 	.word	0x200002a4
- 8002e68:	2000a020 	.word	0x2000a020
+ 8002e68:	20013c60 	.word	0x20013c60
  8002e6c:	200002b8 	.word	0x200002b8
- 8002e70:	2000a7f0 	.word	0x2000a7f0
+ 8002e70:	20014c00 	.word	0x20014c00
  8002e74:	200002ba 	.word	0x200002ba
- 8002e78:	2000abd8 	.word	0x2000abd8
+ 8002e78:	200153d0 	.word	0x200153d0
  8002e7c:	200002bc 	.word	0x200002bc
- 8002e80:	2000afc0 	.word	0x2000afc0
+ 8002e80:	20015ba0 	.word	0x20015ba0
  8002e84:	200002be 	.word	0x200002be
- 8002e88:	2000b3a8 	.word	0x2000b3a8
+ 8002e88:	20016370 	.word	0x20016370
  8002e8c:	200002ec 	.word	0x200002ec
- 8002e90:	2000b790 	.word	0x2000b790
+ 8002e90:	20016b40 	.word	0x20016b40
  8002e94:	200002f0 	.word	0x200002f0
- 8002e98:	2000bf60 	.word	0x2000bf60
+ 8002e98:	20017ae0 	.word	0x20017ae0
  8002e9c:	200002f4 	.word	0x200002f4
- 8002ea0:	2000c730 	.word	0x2000c730
+ 8002ea0:	20018a80 	.word	0x20018a80
  8002ea4:	200002f8 	.word	0x200002f8
- 8002ea8:	2000cf00 	.word	0x2000cf00
+ 8002ea8:	20019a20 	.word	0x20019a20
  8002eac:	200002fc 	.word	0x200002fc
- 8002eb0:	2000d6d0 	.word	0x2000d6d0
+ 8002eb0:	2001a9c0 	.word	0x2001a9c0
  8002eb4:	20000300 	.word	0x20000300
- 8002eb8:	2000dea0 	.word	0x2000dea0
+ 8002eb8:	2001b960 	.word	0x2001b960
  8002ebc:	20000304 	.word	0x20000304
- 8002ec0:	2000e670 	.word	0x2000e670
+ 8002ec0:	2001c900 	.word	0x2001c900
  8002ec4:	20000308 	.word	0x20000308
- 8002ec8:	2000ee40 	.word	0x2000ee40
+ 8002ec8:	2001d8a0 	.word	0x2001d8a0
  8002ecc:	2000030c 	.word	0x2000030c
- 8002ed0:	2000f610 	.word	0x2000f610
+ 8002ed0:	2001e840 	.word	0x2001e840
  8002ed4:	20000310 	.word	0x20000310
- 8002ed8:	2000fde0 	.word	0x2000fde0
+ 8002ed8:	2001f7e0 	.word	0x2001f7e0
  8002edc:	20000314 	.word	0x20000314
- 8002ee0:	200105b0 	.word	0x200105b0
+ 8002ee0:	20020780 	.word	0x20020780
  8002ee4:	20000318 	.word	0x20000318
- 8002ee8:	20010d80 	.word	0x20010d80
+ 8002ee8:	20021720 	.word	0x20021720
  8002eec:	2000033c 	.word	0x2000033c
- 8002ef0:	20011550 	.word	0x20011550
+ 8002ef0:	200226c0 	.word	0x200226c0
  8002ef4:	20000340 	.word	0x20000340
- 8002ef8:	20011d20 	.word	0x20011d20
+ 8002ef8:	20023660 	.word	0x20023660
  8002efc:	20000344 	.word	0x20000344
- 8002f00:	200124f0 	.word	0x200124f0
+ 8002f00:	20024600 	.word	0x20024600
  8002f04:	20000348 	.word	0x20000348
- 8002f08:	20012cc0 	.word	0x20012cc0
+ 8002f08:	200255a0 	.word	0x200255a0
  8002f0c:	20000398 	.word	0x20000398
- 8002f10:	20013490 	.word	0x20013490
+ 8002f10:	20026540 	.word	0x20026540
  8002f14:	2000039c 	.word	0x2000039c
- 8002f18:	20013c60 	.word	0x20013c60
+ 8002f18:	200274e0 	.word	0x200274e0
  8002f1c:	200003a0 	.word	0x200003a0
- 8002f20:	20014430 	.word	0x20014430
+ 8002f20:	20028480 	.word	0x20028480
  8002f24:	200003ac 	.word	0x200003ac
- 8002f28:	20014c00 	.word	0x20014c00
+ 8002f28:	20029420 	.word	0x20029420
  8002f2c:	200003c0 	.word	0x200003c0
  8002f30:	4923      	ldr	r1, [pc, #140]	; (8002fc0 <HAL_TIM_PeriodElapsedCallback+0x22f0>)
  8002f32:	009b      	lsls	r3, r3, #2
@@ -4413,18 +4413,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  8002fba:	46bd      	mov	sp, r7
  8002fbc:	bd80      	pop	{r7, pc}
  8002fbe:	bf00      	nop
- 8002fc0:	20016370 	.word	0x20016370
+ 8002fc0:	2002c300 	.word	0x2002c300
  8002fc4:	200003d8 	.word	0x200003d8
  8002fc8:	200003b0 	.word	0x200003b0
- 8002fcc:	200153d0 	.word	0x200153d0
+ 8002fcc:	2002a3c0 	.word	0x2002a3c0
  8002fd0:	200003b4 	.word	0x200003b4
- 8002fd4:	20015ba0 	.word	0x20015ba0
+ 8002fd4:	2002b360 	.word	0x2002b360
  8002fd8:	200003cc 	.word	0x200003cc
- 8002fdc:	20016b40 	.word	0x20016b40
+ 8002fdc:	2002d2a0 	.word	0x2002d2a0
  8002fe0:	200003d0 	.word	0x200003d0
- 8002fe4:	20017310 	.word	0x20017310
+ 8002fe4:	2002e240 	.word	0x2002e240
  8002fe8:	200003d4 	.word	0x200003d4
- 8002fec:	20017ae0 	.word	0x20017ae0
+ 8002fec:	2002f1e0 	.word	0x2002f1e0
  8002ff0:	20000218 	.word	0x20000218
  8002ff4:	20000214 	.word	0x20000214
  8002ff8:	3a83126f 	.word	0x3a83126f
@@ -4454,7 +4454,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  800301e:	d009      	beq.n	8003034 <HAL_GPIO_EXTI_Callback+0x38>
  8003020:	4b54      	ldr	r3, [pc, #336]	; (8003174 <HAL_GPIO_EXTI_Callback+0x178>)
  8003022:	edd3 7a00 	vldr	s15, [r3]
- 8003026:	eeb1 7a04 	vmov.f32	s14, #20	; 0x40a00000  5.0
+ 8003026:	eeb2 7a04 	vmov.f32	s14, #36	; 0x41200000  10.0
  800302a:	eef4 7ac7 	vcmpe.f32	s15, s14
  800302e:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8003032:	dd05      	ble.n	8003040 <HAL_GPIO_EXTI_Callback+0x44>
@@ -4674,8 +4674,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  80031a4:	200002ba 	.word	0x200002ba
  80031a8:	200002bc 	.word	0x200002bc
  80031ac:	200002be 	.word	0x200002be
- 80031b0:	20018814 	.word	0x20018814
- 80031b4:	200188f8 	.word	0x200188f8
+ 80031b0:	200306e4 	.word	0x200306e4
+ 80031b4:	200307c8 	.word	0x200307c8
  80031b8:	200003dc 	.word	0x200003dc
           printf("%d, ", i_output);
  80031bc:	4bc2      	ldr	r3, [pc, #776]	; (80034c8 <HAL_GPIO_EXTI_Callback+0x4cc>)
@@ -5001,34 +5001,34 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  80034cc:	0800bb24 	.word	0x0800bb24
  80034d0:	200003e0 	.word	0x200003e0
  80034d4:	0800bb2c 	.word	0x0800bb2c
- 80034d8:	20000bb0 	.word	0x20000bb0
- 80034dc:	20001380 	.word	0x20001380
- 80034e0:	20001b50 	.word	0x20001b50
- 80034e4:	20002320 	.word	0x20002320
- 80034e8:	20002af0 	.word	0x20002af0
- 80034ec:	200032c0 	.word	0x200032c0
- 80034f0:	20003a90 	.word	0x20003a90
- 80034f4:	20004260 	.word	0x20004260
- 80034f8:	20004a30 	.word	0x20004a30
- 80034fc:	20005200 	.word	0x20005200
- 8003500:	200059d0 	.word	0x200059d0
- 8003504:	200061a0 	.word	0x200061a0
- 8003508:	20006970 	.word	0x20006970
- 800350c:	20007140 	.word	0x20007140
- 8003510:	20007910 	.word	0x20007910
- 8003514:	200080e0 	.word	0x200080e0
- 8003518:	200088b0 	.word	0x200088b0
- 800351c:	20009080 	.word	0x20009080
- 8003520:	20009850 	.word	0x20009850
- 8003524:	2000a020 	.word	0x2000a020
- 8003528:	2000a7f0 	.word	0x2000a7f0
- 800352c:	2000abd8 	.word	0x2000abd8
- 8003530:	2000afc0 	.word	0x2000afc0
- 8003534:	2000b3a8 	.word	0x2000b3a8
- 8003538:	2000b790 	.word	0x2000b790
- 800353c:	2000bf60 	.word	0x2000bf60
- 8003540:	2000c730 	.word	0x2000c730
- 8003544:	2000cf00 	.word	0x2000cf00
+ 80034d8:	20001380 	.word	0x20001380
+ 80034dc:	20002320 	.word	0x20002320
+ 80034e0:	200032c0 	.word	0x200032c0
+ 80034e4:	20004260 	.word	0x20004260
+ 80034e8:	20005200 	.word	0x20005200
+ 80034ec:	200061a0 	.word	0x200061a0
+ 80034f0:	20007140 	.word	0x20007140
+ 80034f4:	200080e0 	.word	0x200080e0
+ 80034f8:	20009080 	.word	0x20009080
+ 80034fc:	2000a020 	.word	0x2000a020
+ 8003500:	2000afc0 	.word	0x2000afc0
+ 8003504:	2000bf60 	.word	0x2000bf60
+ 8003508:	2000cf00 	.word	0x2000cf00
+ 800350c:	2000dea0 	.word	0x2000dea0
+ 8003510:	2000ee40 	.word	0x2000ee40
+ 8003514:	2000fde0 	.word	0x2000fde0
+ 8003518:	20010d80 	.word	0x20010d80
+ 800351c:	20011d20 	.word	0x20011d20
+ 8003520:	20012cc0 	.word	0x20012cc0
+ 8003524:	20013c60 	.word	0x20013c60
+ 8003528:	20014c00 	.word	0x20014c00
+ 800352c:	200153d0 	.word	0x200153d0
+ 8003530:	20015ba0 	.word	0x20015ba0
+ 8003534:	20016370 	.word	0x20016370
+ 8003538:	20016b40 	.word	0x20016b40
+ 800353c:	20017ae0 	.word	0x20017ae0
+ 8003540:	20018a80 	.word	0x20018a80
+ 8003544:	20019a20 	.word	0x20019a20
  8003548:	48a5      	ldr	r0, [pc, #660]	; (80037e0 <HAL_GPIO_EXTI_Callback+0x7e4>)
  800354a:	f006 fb09 	bl	8009b60 <iprintf>
           
@@ -5292,7 +5292,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  80037c4:	6013      	str	r3, [r2, #0]
  80037c6:	4b07      	ldr	r3, [pc, #28]	; (80037e4 <HAL_GPIO_EXTI_Callback+0x7e8>)
  80037c8:	681b      	ldr	r3, [r3, #0]
- 80037ca:	f5b3 7ffa 	cmp.w	r3, #500	; 0x1f4
+ 80037ca:	f5b3 7f7a 	cmp.w	r3, #1000	; 0x3e8
  80037ce:	f6ff acf5 	blt.w	80031bc <HAL_GPIO_EXTI_Callback+0x1c0>
         }
         break;
@@ -5311,28 +5311,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  80037de:	bf00      	nop
  80037e0:	0800bb2c 	.word	0x0800bb2c
  80037e4:	200003dc 	.word	0x200003dc
- 80037e8:	2000d6d0 	.word	0x2000d6d0
- 80037ec:	2000dea0 	.word	0x2000dea0
- 80037f0:	2000e670 	.word	0x2000e670
- 80037f4:	2000ee40 	.word	0x2000ee40
- 80037f8:	2000f610 	.word	0x2000f610
- 80037fc:	2000fde0 	.word	0x2000fde0
- 8003800:	200105b0 	.word	0x200105b0
- 8003804:	20010d80 	.word	0x20010d80
- 8003808:	20011550 	.word	0x20011550
- 800380c:	20011d20 	.word	0x20011d20
- 8003810:	200124f0 	.word	0x200124f0
- 8003814:	20012cc0 	.word	0x20012cc0
- 8003818:	20013490 	.word	0x20013490
- 800381c:	20013c60 	.word	0x20013c60
- 8003820:	20014430 	.word	0x20014430
- 8003824:	20014c00 	.word	0x20014c00
- 8003828:	20016370 	.word	0x20016370
- 800382c:	200153d0 	.word	0x200153d0
- 8003830:	20015ba0 	.word	0x20015ba0
- 8003834:	20016b40 	.word	0x20016b40
- 8003838:	20017310 	.word	0x20017310
- 800383c:	20017ae0 	.word	0x20017ae0
+ 80037e8:	2001a9c0 	.word	0x2001a9c0
+ 80037ec:	2001b960 	.word	0x2001b960
+ 80037f0:	2001c900 	.word	0x2001c900
+ 80037f4:	2001d8a0 	.word	0x2001d8a0
+ 80037f8:	2001e840 	.word	0x2001e840
+ 80037fc:	2001f7e0 	.word	0x2001f7e0
+ 8003800:	20020780 	.word	0x20020780
+ 8003804:	20021720 	.word	0x20021720
+ 8003808:	200226c0 	.word	0x200226c0
+ 800380c:	20023660 	.word	0x20023660
+ 8003810:	20024600 	.word	0x20024600
+ 8003814:	200255a0 	.word	0x200255a0
+ 8003818:	20026540 	.word	0x20026540
+ 800381c:	200274e0 	.word	0x200274e0
+ 8003820:	20028480 	.word	0x20028480
+ 8003824:	20029420 	.word	0x20029420
+ 8003828:	2002c300 	.word	0x2002c300
+ 800382c:	2002a3c0 	.word	0x2002a3c0
+ 8003830:	2002b360 	.word	0x2002b360
+ 8003834:	2002d2a0 	.word	0x2002d2a0
+ 8003838:	2002e240 	.word	0x2002e240
+ 800383c:	2002f1e0 	.word	0x2002f1e0
  8003840:	0800bb34 	.word	0x0800bb34
 
 08003844 <main>:
@@ -5503,23 +5503,23 @@ int main(void)
     Euler      = bno055_getVectorEuler();
  8003978:	e7c5      	b.n	8003906 <main+0xc2>
  800397a:	bf00      	nop
- 800397c:	20018958 	.word	0x20018958
- 8003980:	200188b8 	.word	0x200188b8
- 8003984:	20018854 	.word	0x20018854
- 8003988:	20018300 	.word	0x20018300
- 800398c:	200182c0 	.word	0x200182c0
+ 800397c:	20030828 	.word	0x20030828
+ 8003980:	20030788 	.word	0x20030788
+ 8003984:	20030724 	.word	0x20030724
+ 8003988:	200301d0 	.word	0x200301d0
+ 800398c:	20030190 	.word	0x20030190
  8003990:	2000000a 	.word	0x2000000a
  8003994:	40010000 	.word	0x40010000
  8003998:	40000400 	.word	0x40000400
  800399c:	40000800 	.word	0x40000800
  80039a0:	40010400 	.word	0x40010400
- 80039a4:	20018814 	.word	0x20018814
- 80039a8:	200188f8 	.word	0x200188f8
- 80039ac:	200183c0 	.word	0x200183c0
+ 80039a4:	200306e4 	.word	0x200306e4
+ 80039a8:	200307c8 	.word	0x200307c8
+ 80039ac:	20030290 	.word	0x20030290
  80039b0:	40020400 	.word	0x40020400
- 80039b4:	20018898 	.word	0x20018898
- 80039b8:	20018998 	.word	0x20018998
- 80039bc:	20018938 	.word	0x20018938
+ 80039b4:	20030768 	.word	0x20030768
+ 80039b8:	20030868 	.word	0x20030868
+ 80039bc:	20030808 	.word	0x20030808
 
 080039c0 <SystemClock_Config>:
 /**
@@ -5788,7 +5788,7 @@ static void MX_I2C1_Init(void)
  8003b5e:	bf00      	nop
  8003b60:	bd80      	pop	{r7, pc}
  8003b62:	bf00      	nop
- 8003b64:	200183c0 	.word	0x200183c0
+ 8003b64:	20030290 	.word	0x20030290
  8003b68:	40005400 	.word	0x40005400
  8003b6c:	2010091a 	.word	0x2010091a
 
@@ -5920,7 +5920,7 @@ static void MX_TIM1_Init(void)
  8003c16:	3730      	adds	r7, #48	; 0x30
  8003c18:	46bd      	mov	sp, r7
  8003c1a:	bd80      	pop	{r7, pc}
- 8003c1c:	200188b8 	.word	0x200188b8
+ 8003c1c:	20030788 	.word	0x20030788
  8003c20:	40010000 	.word	0x40010000
 
 08003c24 <MX_TIM2_Init>:
@@ -6032,7 +6032,7 @@ static void MX_TIM2_Init(void)
  8003cb6:	46bd      	mov	sp, r7
  8003cb8:	bd80      	pop	{r7, pc}
  8003cba:	bf00      	nop
- 8003cbc:	20018958 	.word	0x20018958
+ 8003cbc:	20030828 	.word	0x20030828
 
 08003cc0 <MX_TIM3_Init>:
   * @brief TIM3 Initialization Function
@@ -6156,7 +6156,7 @@ static void MX_TIM3_Init(void)
  8003d5e:	46bd      	mov	sp, r7
  8003d60:	bd80      	pop	{r7, pc}
  8003d62:	bf00      	nop
- 8003d64:	20018854 	.word	0x20018854
+ 8003d64:	20030724 	.word	0x20030724
  8003d68:	40000400 	.word	0x40000400
 
 08003d6c <MX_TIM4_Init>:
@@ -6281,7 +6281,7 @@ static void MX_TIM4_Init(void)
  8003e0a:	46bd      	mov	sp, r7
  8003e0c:	bd80      	pop	{r7, pc}
  8003e0e:	bf00      	nop
- 8003e10:	20018300 	.word	0x20018300
+ 8003e10:	200301d0 	.word	0x200301d0
  8003e14:	40000800 	.word	0x40000800
 
 08003e18 <MX_TIM5_Init>:
@@ -6453,7 +6453,7 @@ static void MX_TIM5_Init(void)
  8003f0e:	3738      	adds	r7, #56	; 0x38
  8003f10:	46bd      	mov	sp, r7
  8003f12:	bd80      	pop	{r7, pc}
- 8003f14:	20018814 	.word	0x20018814
+ 8003f14:	200306e4 	.word	0x200306e4
  8003f18:	40000c00 	.word	0x40000c00
 
 08003f1c <MX_TIM8_Init>:
@@ -6584,7 +6584,7 @@ static void MX_TIM8_Init(void)
  8003fc2:	3730      	adds	r7, #48	; 0x30
  8003fc4:	46bd      	mov	sp, r7
  8003fc6:	bd80      	pop	{r7, pc}
- 8003fc8:	200182c0 	.word	0x200182c0
+ 8003fc8:	20030190 	.word	0x20030190
  8003fcc:	40010400 	.word	0x40010400
 
 08003fd0 <MX_TIM9_Init>:
@@ -6733,7 +6733,7 @@ static void MX_TIM9_Init(void)
  800409e:	46bd      	mov	sp, r7
  80040a0:	bd80      	pop	{r7, pc}
  80040a2:	bf00      	nop
- 80040a4:	200188f8 	.word	0x200188f8
+ 80040a4:	200307c8 	.word	0x200307c8
  80040a8:	40014000 	.word	0x40014000
 
 080040ac <MX_USART3_UART_Init>:
@@ -6808,7 +6808,7 @@ static void MX_USART3_UART_Init(void)
  80040fe:	bf00      	nop
  8004100:	bd80      	pop	{r7, pc}
  8004102:	bf00      	nop
- 8004104:	20018340 	.word	0x20018340
+ 8004104:	20030210 	.word	0x20030210
  8004108:	40004800 	.word	0x40004800
 
 0800410c <MX_USB_OTG_FS_PCD_Init>:
@@ -6883,7 +6883,7 @@ static void MX_USB_OTG_FS_PCD_Init(void)
  800415e:	bf00      	nop
  8004160:	bd80      	pop	{r7, pc}
  8004162:	bf00      	nop
- 8004164:	2001840c 	.word	0x2001840c
+ 8004164:	200302dc 	.word	0x200302dc
 
 08004168 <MX_GPIO_Init>:
   * @brief GPIO Initialization Function
@@ -8261,7 +8261,7 @@ void TIM2_IRQHandler(void)
  800495a:	bf00      	nop
  800495c:	bd80      	pop	{r7, pc}
  800495e:	bf00      	nop
- 8004960:	20018958 	.word	0x20018958
+ 8004960:	20030828 	.word	0x20030828
 
 08004964 <_read>:
 	_kill(status, -1);
@@ -8505,8 +8505,8 @@ void *_sbrk(ptrdiff_t incr)
  8004a9a:	bd80      	pop	{r7, pc}
  8004a9c:	20080000 	.word	0x20080000
  8004aa0:	00000400 	.word	0x00000400
- 8004aa4:	200182b0 	.word	0x200182b0
- 8004aa8:	200189e8 	.word	0x200189e8
+ 8004aa4:	20030180 	.word	0x20030180
+ 8004aa8:	200308b8 	.word	0x200308b8
 
 08004aac <SystemInit>:
   *         SystemFrequency variable.
@@ -8628,7 +8628,7 @@ LoopFillZerobss:
   ldr  r2, =_sbss
  8004b20:	200001f8 	.word	0x200001f8
   ldr  r3, = _ebss
- 8004b24:	200189e4 	.word	0x200189e4
+ 8004b24:	200308b4 	.word	0x200308b4
 
 08004b28 <ADC_IRQHandler>:
  * @retval None       
@@ -8764,7 +8764,7 @@ __weak void HAL_IncTick(void)
  8004bc0:	4770      	bx	lr
  8004bc2:	bf00      	nop
  8004bc4:	20000024 	.word	0x20000024
- 8004bc8:	200189dc 	.word	0x200189dc
+ 8004bc8:	200308ac 	.word	0x200308ac
 
 08004bcc <HAL_GetTick>:
   * @note This function is declared as __weak to be overwritten in case of other 
@@ -8784,7 +8784,7 @@ __weak uint32_t HAL_GetTick(void)
  8004bd8:	f85d 7b04 	ldr.w	r7, [sp], #4
  8004bdc:	4770      	bx	lr
  8004bde:	bf00      	nop
- 8004be0:	200189dc 	.word	0x200189dc
+ 8004be0:	200308ac 	.word	0x200308ac
 
 08004be4 <HAL_Delay>:
   *       implementations in user file.
@@ -24488,7 +24488,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b3d6:	e7c7      	b.n	800b368 <_free_r+0x24>
  800b3d8:	bd38      	pop	{r3, r4, r5, pc}
  800b3da:	bf00      	nop
- 800b3dc:	200182b4 	.word	0x200182b4
+ 800b3dc:	20030184 	.word	0x20030184
 
 0800b3e0 <_malloc_r>:
  800b3e0:	b570      	push	{r4, r5, r6, lr}
@@ -24567,8 +24567,8 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b486:	d0cf      	beq.n	800b428 <_malloc_r+0x48>
  800b488:	6025      	str	r5, [r4, #0]
  800b48a:	e7db      	b.n	800b444 <_malloc_r+0x64>
- 800b48c:	200182b4 	.word	0x200182b4
- 800b490:	200182b8 	.word	0x200182b8
+ 800b48c:	20030184 	.word	0x20030184
+ 800b490:	20030188 	.word	0x20030188
 
 0800b494 <__sfputc_r>:
  800b494:	6893      	ldr	r3, [r2, #8]
@@ -24852,7 +24852,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b72a:	b103      	cbz	r3, 800b72e <_sbrk_r+0x1a>
  800b72c:	602b      	str	r3, [r5, #0]
  800b72e:	bd38      	pop	{r3, r4, r5, pc}
- 800b730:	200189e0 	.word	0x200189e0
+ 800b730:	200308b0 	.word	0x200308b0
 
 0800b734 <__sread>:
  800b734:	b510      	push	{r4, lr}
@@ -24930,7 +24930,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b7d6:	b103      	cbz	r3, 800b7da <_write_r+0x1e>
  800b7d8:	602b      	str	r3, [r5, #0]
  800b7da:	bd38      	pop	{r3, r4, r5, pc}
- 800b7dc:	200189e0 	.word	0x200189e0
+ 800b7dc:	200308b0 	.word	0x200308b0
 
 0800b7e0 <_close_r>:
  800b7e0:	b538      	push	{r3, r4, r5, lr}
@@ -24946,7 +24946,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b7f6:	b103      	cbz	r3, 800b7fa <_close_r+0x1a>
  800b7f8:	602b      	str	r3, [r5, #0]
  800b7fa:	bd38      	pop	{r3, r4, r5, pc}
- 800b7fc:	200189e0 	.word	0x200189e0
+ 800b7fc:	200308b0 	.word	0x200308b0
 
 0800b800 <_fstat_r>:
  800b800:	b538      	push	{r3, r4, r5, lr}
@@ -24964,7 +24964,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b81a:	602b      	str	r3, [r5, #0]
  800b81c:	bd38      	pop	{r3, r4, r5, pc}
  800b81e:	bf00      	nop
- 800b820:	200189e0 	.word	0x200189e0
+ 800b820:	200308b0 	.word	0x200308b0
 
 0800b824 <_isatty_r>:
  800b824:	b538      	push	{r3, r4, r5, lr}
@@ -24980,7 +24980,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b83a:	b103      	cbz	r3, 800b83e <_isatty_r+0x1a>
  800b83c:	602b      	str	r3, [r5, #0]
  800b83e:	bd38      	pop	{r3, r4, r5, pc}
- 800b840:	200189e0 	.word	0x200189e0
+ 800b840:	200308b0 	.word	0x200308b0
 
 0800b844 <_lseek_r>:
  800b844:	b538      	push	{r3, r4, r5, lr}
@@ -24998,7 +24998,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b85e:	b103      	cbz	r3, 800b862 <_lseek_r+0x1e>
  800b860:	602b      	str	r3, [r5, #0]
  800b862:	bd38      	pop	{r3, r4, r5, pc}
- 800b864:	200189e0 	.word	0x200189e0
+ 800b864:	200308b0 	.word	0x200308b0
 
 0800b868 <__ascii_mbtowc>:
  800b868:	b082      	sub	sp, #8
@@ -25041,7 +25041,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
  800b8aa:	b103      	cbz	r3, 800b8ae <_read_r+0x1e>
  800b8ac:	602b      	str	r3, [r5, #0]
  800b8ae:	bd38      	pop	{r3, r4, r5, pc}
- 800b8b0:	200189e0 	.word	0x200189e0
+ 800b8b0:	200308b0 	.word	0x200308b0
 
 0800b8b4 <__ascii_wctomb>:
  800b8b4:	b149      	cbz	r1, 800b8ca <__ascii_wctomb+0x16>

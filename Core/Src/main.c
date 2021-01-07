@@ -599,7 +599,7 @@ float Acc_z = 0.0;
 
 // * Save variables in SRAM
 // #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-#define N_SRAM 500
+#define N_SRAM 1000
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
