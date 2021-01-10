@@ -1,10 +1,11 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #define angular_velocity_control
+#define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
+// #define Enable_WOB_Force_Dimension
 // #define Enable_PD_controller_av
-#define Enable_Vehicle_Velocity_control
+// #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 // #define Enable_Driving_Force_Control
 #define Enable_I2C
@@ -158,12 +159,23 @@ float dtheta2_res_pre = 0.0;
 float dtheta3_res_pre = 0.0;
 float dtheta4_res_pre = 0.0;
 
-#define G_LPF 50.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0 20.0
+#define G_LPF      50.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0 20.0
+#define G_LPF_ddth 30.0f // [rad/sec] : For pseudo derivative when calculating angular acceleration
 
-float dtheta1_res_raw = 0.0;// [rad/sec]
-float dtheta2_res_raw = 0.0;
-float dtheta3_res_raw = 0.0;
-float dtheta4_res_raw = 0.0;
+float ddtheta1_res = 0.0;
+float ddtheta2_res = 0.0;
+float ddtheta3_res = 0.0;
+float ddtheta4_res = 0.0;
+
+float ddtheta1_res_pre = 0.0;
+float ddtheta2_res_pre = 0.0;
+float ddtheta3_res_pre = 0.0;
+float ddtheta4_res_pre = 0.0;
+
+// float dtheta1_res_raw = 0.0;// [rad/sec]
+// float dtheta2_res_raw = 0.0;
+// float dtheta3_res_raw = 0.0;
+// float dtheta4_res_raw = 0.0;
 
 float ddtheta1_ref = 0.0;
 float ddtheta2_ref = 0.0;
@@ -238,7 +250,7 @@ float phi_res = 1.570796326794895;// [rad]
 // These are the values on the side of wheels
 // const float F1_plus  =  0.00002;// Coulomb friction torque [Nm]
 // const float F1_minus = -0.00002;
-// const float D1_plus  =  0.0011; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_plus  =  0.0011; // Viscous friction coefficient [Nm*sec/rad]
 // const float D1_minus = -0.0011;
 
 // const float F2_plus  =  0.00002;
@@ -269,7 +281,7 @@ float phi_res = 1.570796326794895;// [rad]
 // const float F4_minus = -0.00002;
 
 // * 2020/11/14
-// const float D1_plus  =  0.0004; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_plus  =  0.0004; // Viscous friction coefficient [Nm*sec/rad]
 // const float D1_minus = 0.0003;
 
 // const float D2_plus  =  -0.0006;
@@ -308,7 +320,7 @@ float phi_res = 1.570796326794895;// [rad]
 
 // const float F1_plus  =  0.0158;// Coulomb friction torque [Nm]
 // const float F1_minus = -0.0163;
-// const float D1_plus  =  -0.002; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_plus  =  -0.002; // Viscous friction coefficient [Nm*sec/rad]
 // const float D1_minus = -0.002;
 
 // const float F2_plus  =  0.0173;
@@ -329,7 +341,7 @@ float phi_res = 1.570796326794895;// [rad]
 
 
 // * 2020/12/11 : First, before acceleration experiment
-// const float D1_plus  = -0.00003; // Viscous frcition coefficient [Nm*sec/rad]
+// const float D1_plus  = -0.00003; // Viscous friction coefficient [Nm*sec/rad]
 // const float D1_minus =  0.0003;
 
 // const float D2_plus  = -0.0002;
@@ -356,7 +368,7 @@ float phi_res = 1.570796326794895;// [rad]
 
 
 // * 2020/12/12 : Second, utilize inertia( Gear * Gear * J ) (not utilize inertia by acceleration experiment)
-const float D1_plus  = 0.0005; // Viscous frcition coefficient [Nm*sec/rad]
+const float D1_plus  = 0.0005; // Viscous friction coefficient [Nm*sec/rad]
 const float D1_minus = 0.0006;
 
 const float D2_plus  = 0.0004;
@@ -576,7 +588,7 @@ float yaw_initial = pi / 2.0;
 float yaw_pre = 0.0;
 float yaw_digit = 0.0;
 
-float yaw_rate = 0.0;
+float yaw_rate = 0.0;// [rad/sec]
 float roll_rate = 0.0;
 float pitch_rate = 0.0;
 
@@ -587,14 +599,78 @@ float yaw_rate_notch      = 0.0;
 float yaw_rate_notch_pre  = 0.0;
 float yaw_rate_notch_pre2 = 0.0;
 
+float d_yawrate     = 0.0;// [rad/sec^2] ddphi_res : angular acceleration
+float d_yawrate_pre = 0.0;
+
 #define zeta1 1.0f // Inverse of Q value
 #define N_roller 9.0f // Number of free roller
 float G_notch1 = 90.0; // [rad/sec]
 
-float Acc_x = 0.0;
+float Acc_x = 0.0;// Sensor coordinate system
 float Acc_y = 0.0;
 float Acc_z = 0.0;
+
+float Acc_x_correct = 0.0;// Space(Absolute) coordinate system
+float Acc_y_correct = 0.0;
+float Acc_z_correct = 0.0;
+
+float Acc_x_correct_pre = 0.0;// Space(Absolute) coordinate system
+float Acc_y_correct_pre = 0.0;
+float Acc_z_correct_pre = 0.0;
+
+#define G_LPF_acc 100.0f // [rad/sec]
+
+float Acc_x_LPF = 0.0;
+float Acc_y_LPF = 0.0;
+float Acc_z_LPF = 0.0;
+
+float Acc_x_LPF_pre = 0.0;
+float Acc_y_LPF_pre = 0.0;
+float Acc_z_LPF_pre = 0.0;
 // * IMU
+
+
+// * Slip Ratio
+#define epsilon 0.001f // Prevent division by 0
+
+float lambda_1_hat = 0.0;// Estimated slip ratio when just encoder is utilized
+float lambda_2_hat = 0.0;
+float lambda_3_hat = 0.0;
+float lambda_4_hat = 0.0;
+
+float d_lambda_1_hat = 0.0;
+float d_lambda_2_hat = 0.0;
+float d_lambda_3_hat = 0.0;
+float d_lambda_4_hat = 0.0;
+
+float dv_1 = 0.0;
+float dv_2 = 0.0;
+float dv_3 = 0.0;
+float dv_4 = 0.0;
+
+float delta_dv = 0.0;
+
+float lambda_1_hat_acc = 0.0;// Estimated slip ratio when encoder and acceleration are utilized
+float lambda_2_hat_acc = 0.0;
+float lambda_3_hat_acc = 0.0;
+float lambda_4_hat_acc = 0.0;
+
+float d_lambda_1_hat_acc = 0.0;
+float d_lambda_2_hat_acc = 0.0;
+float d_lambda_3_hat_acc = 0.0;
+float d_lambda_4_hat_acc = 0.0;
+
+float dv_1_acc = 0.0;
+float dv_2_acc = 0.0;
+float dv_3_acc = 0.0;
+float dv_4_acc = 0.0;
+// * Slip Ratio
+
+// * WOB
+#define G_WOB 50.0f // [rad/sec]
+float M_z_dis = 0.0;// For WOB Force Dimension
+float M_z_dis_pre = 0.0;
+// * WOB
 
 
 // * Save variables in SRAM
@@ -604,7 +680,7 @@ float Acc_z = 0.0;
 #define t_experiment N_SRAM / 100.0f
 
 int i_save = 0;  // For "for sentences"
-int i_output = 0;// For displaying datas after experiment
+int i_output = 0;// For displaying data after experiment
 
 float t_SRAM[N_SRAM] = {};
 
@@ -623,10 +699,15 @@ float ddtheta2_ref_SRAM[N_SRAM] = {};
 float ddtheta3_ref_SRAM[N_SRAM] = {};
 float ddtheta4_ref_SRAM[N_SRAM] = {};
 
-float i1_ref_SRAM[N_SRAM] = {};
-float i2_ref_SRAM[N_SRAM] = {};
-float i3_ref_SRAM[N_SRAM] = {};
-float i4_ref_SRAM[N_SRAM] = {};
+float ddtheta1_res_SRAM[N_SRAM] = {};
+float ddtheta2_res_SRAM[N_SRAM] = {};
+float ddtheta3_res_SRAM[N_SRAM] = {};
+float ddtheta4_res_SRAM[N_SRAM] = {};
+
+// float i1_ref_SRAM[N_SRAM] = {};
+// float i2_ref_SRAM[N_SRAM] = {};
+// float i3_ref_SRAM[N_SRAM] = {};
+// float i4_ref_SRAM[N_SRAM] = {};
 
 float ia1_ref_SRAM[N_SRAM] = {};
 float ia2_ref_SRAM[N_SRAM] = {};
@@ -689,6 +770,24 @@ float yaw_rate_notch_SRAM[N_SRAM] = {};
 float Acc_x_SRAM[N_SRAM] = {};
 float Acc_y_SRAM[N_SRAM] = {};
 float Acc_z_SRAM[N_SRAM] = {};
+
+float Acc_x_correct_SRAM[N_SRAM] = {};
+float Acc_y_correct_SRAM[N_SRAM] = {};
+float Acc_z_correct_SRAM[N_SRAM] = {};
+
+float Acc_x_LPF_SRAM[N_SRAM] = {};
+float Acc_y_LPF_SRAM[N_SRAM] = {};
+// float Acc_z_LPF_SRAM[N_SRAM] = {};
+
+float lambda_1_hat_SRAM[N_SRAM] = {};
+float lambda_2_hat_SRAM[N_SRAM] = {};
+float lambda_3_hat_SRAM[N_SRAM] = {};
+float lambda_4_hat_SRAM[N_SRAM] = {};
+
+float lambda_1_hat_acc_SRAM[N_SRAM] = {};
+float lambda_2_hat_acc_SRAM[N_SRAM] = {};
+float lambda_3_hat_acc_SRAM[N_SRAM] = {};
+float lambda_4_hat_acc_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 // * Command
@@ -780,11 +879,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         Acc_x = -Acc.x;// Adjust these values to Vehicle coordinate system of modeling
         Acc_y = -Acc.y;// Direction is opposite, due to inertial force
-        Acc_z = Acc.z;
+        Acc_z = -Acc.z;// Add minus - : as of 2021/01/09
 
-        yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert degree to rad
+        yaw   = yaw   * 2.0 * pi / 360.0;// [rad] Convert degree to rad
         roll  = roll  * 2.0 * pi / 360.0;
         pitch = pitch * 2.0 * pi / 360.0;
+
+        Acc_x_correct = cos(roll)*cos(pitch)                                *Acc_x + sin(roll)*cos(pitch)                                *Acc_y - sin(pitch)         *Acc_z;
+        Acc_y_correct = ( cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*sin(yaw)+cos(roll)*cos(yaw) )*Acc_y + cos(pitch)*sin(yaw)*Acc_z;
+        Acc_z_correct = ( cos(roll)*sin(pitch)*cos(yaw)+sin(roll)*sin(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw) )*Acc_y + cos(pitch)*cos(yaw)*Acc_z;
+
+        Acc_x_LPF = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * Acc_x_LPF_pre + G_LPF_acc * dt * ( Acc_x_correct + Acc_x_correct_pre ) );// LPF
+        Acc_y_LPF = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * Acc_y_LPF_pre + G_LPF_acc * dt * ( Acc_y_correct + Acc_y_correct_pre ) );// LPF
+        d_yawrate = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * d_yawrate_pre + 2.0 * G_LPF_acc * (yaw_rate - yaw_rate_pre) );// Pseudo Derivative : ddphi_res
+
+        yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert this value to definition in modeling 
 
         yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;// ! Direction is not confirmed yet.
         roll_rate  = roll_rate  * 2.0 * pi / 360.0;
@@ -805,12 +914,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         yaw_rate_notch = 1.0 / ( 1.0 + 2.0*zeta1*G_notch1*dt + G_notch1*G_notch1*dt*dt ) * ( 2.0*(1.0+zeta1*G_notch1*dt)*yaw_rate_notch_pre - yaw_rate_notch_pre2 + (1.0 + G_notch1*G_notch1*dt*dt)*yaw_rate - 2.0*yaw_rate_pre + yaw_rate_pre2 );
         // * Notch Filter ( Band-stop Filter ) : Back Difference
 
-        // * Save previous values
-        yaw_rate_pre2       = yaw_rate_pre;
-        yaw_rate_pre        = yaw_rate;
-        yaw_rate_notch_pre2 = yaw_rate_notch_pre;
-        yaw_rate_notch_pre  = yaw_rate_notch;
-        // * Save previous values
+          // * Save previous values
+          Acc_x_correct_pre = Acc_x_correct;
+          Acc_y_correct_pre = Acc_y_correct;
+          d_yawrate_pre     = d_yawrate;
+
+          yaw_rate_pre2       = yaw_rate_pre;
+          yaw_rate_pre        = yaw_rate;
+          yaw_rate_notch_pre2 = yaw_rate_notch_pre;
+          yaw_rate_notch_pre  = yaw_rate_notch;
+          // * Save previous values
 
         if     ( yaw - yaw_pre > 2.0*pi/2.0 ) yaw_digit--;
         else if( yaw_pre - yaw > 2.0*pi/2.0 ) yaw_digit++;
@@ -823,10 +936,126 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // dtheta3_res_raw = ( theta3_res - theta3_res_pre )/dt;
         // dtheta4_res_raw = ( theta4_res - theta4_res_pre )/dt;
 
-        dtheta1_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta1_res_pre + 2.0 * G_LPF * (theta1_res - theta1_res_pre) );
-        dtheta2_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta2_res_pre + 2.0 * G_LPF * (theta2_res - theta2_res_pre) );
-        dtheta3_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta3_res_pre + 2.0 * G_LPF * (theta3_res - theta3_res_pre) );
-        dtheta4_res = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta4_res_pre + 2.0 * G_LPF * (theta4_res - theta4_res_pre) );
+        dtheta1_res  = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta1_res_pre + 2.0 * G_LPF * (theta1_res - theta1_res_pre) );
+        dtheta2_res  = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta2_res_pre + 2.0 * G_LPF * (theta2_res - theta2_res_pre) );
+        dtheta3_res  = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta3_res_pre + 2.0 * G_LPF * (theta3_res - theta3_res_pre) );
+        dtheta4_res  = 1.0 / (2.0 + G_LPF * dt) * ( (2.0 - G_LPF * dt)*dtheta4_res_pre + 2.0 * G_LPF * (theta4_res - theta4_res_pre) );
+
+        ddtheta1_res = 1.0 / (2.0 + G_LPF_ddth * dt) * ( (2.0 - G_LPF_ddth * dt)*ddtheta1_res_pre + 2.0 * G_LPF_ddth * (dtheta1_res - dtheta1_res_pre) );
+        ddtheta2_res = 1.0 / (2.0 + G_LPF_ddth * dt) * ( (2.0 - G_LPF_ddth * dt)*ddtheta2_res_pre + 2.0 * G_LPF_ddth * (dtheta2_res - dtheta2_res_pre) );
+        ddtheta3_res = 1.0 / (2.0 + G_LPF_ddth * dt) * ( (2.0 - G_LPF_ddth * dt)*ddtheta3_res_pre + 2.0 * G_LPF_ddth * (dtheta3_res - dtheta3_res_pre) );
+        ddtheta4_res = 1.0 / (2.0 + G_LPF_ddth * dt) * ( (2.0 - G_LPF_ddth * dt)*ddtheta4_res_pre + 2.0 * G_LPF_ddth * (dtheta4_res - dtheta4_res_pre) );
+
+          // * Save previous values
+          ddtheta1_res_pre = ddtheta1_res;
+          ddtheta2_res_pre = ddtheta2_res;
+          ddtheta3_res_pre = ddtheta3_res;
+          ddtheta4_res_pre = ddtheta4_res;
+          // * Save previous values
+
+        // * Slip Ratio Observer
+        delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );
+
+        dv_1 = sqrt(2.0) * Mass * ( fd_hat1 + fd_hat3 ) - delta_dv;
+        dv_2 = sqrt(2.0) * Mass * ( fd_hat2 + fd_hat4 ) - delta_dv;
+        dv_3 = sqrt(2.0) * Mass * ( fd_hat1 + fd_hat3 ) + delta_dv;
+        dv_4 = sqrt(2.0) * Mass * ( fd_hat2 + fd_hat4 ) + delta_dv;
+
+        dv_1_acc =   Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
+        dv_2_acc = - Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
+        dv_3_acc =   Acc_x_LPF + Acc_y_LPF + ( L + W ) * d_yawrate;
+        dv_4_acc = - Acc_x_LPF + Acc_y_LPF + ( L + W ) * d_yawrate;
+        
+        if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
+          if( dv_1 >= 0.0 ){// Acceleration
+            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+          }else{// Deceleration
+            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
+          }
+        }else{
+            d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
+        }
+
+        if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
+          if( dv_2 >= 0.0 ){// Acceleration
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
+          }else{// Deceleration
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
+          }
+        }else{
+            d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
+        }
+
+        if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
+          if( dv_3 >= 0.0 ){// Acceleration
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
+          }else{// Deceleration
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
+          }
+        }else{
+            d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
+        }
+
+        if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
+          if( dv_4 >= 0.0 ){// Acceleration
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
+          }else{// Deceleration
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
+          }
+        }else{
+            d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
+        }
+
+        if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
+          if( dv_1_acc >= 0.0 ){// Acceleration
+            d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat_acc ) - dv_1_acc / ( Rw * dtheta1_res );
+          }else{// Deceleration
+            d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
+          }
+        }else{
+            d_lambda_1_hat_acc = ( Rw * ddtheta1_res - dv_1_acc ) / epsilon;
+        }
+
+        if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
+          if( dv_2_acc >= 0.0 ){// Acceleration
+            d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat_acc ) - dv_2_acc / ( Rw * dtheta2_res );
+          }else{// Deceleration
+            d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat_acc ) - ( 1.0 + lambda_2_hat_acc )*( 1.0 + lambda_2_hat_acc ) * dv_2_acc / ( Rw * dtheta2_res );
+          }
+        }else{
+            d_lambda_2_hat_acc = ( Rw * ddtheta2_res - dv_2_acc ) / epsilon;
+        }
+
+        if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
+          if( dv_3_acc >= 0.0 ){// Acceleration
+            d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat_acc ) - dv_3_acc / ( Rw * dtheta3_res );
+          }else{// Deceleration
+            d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat_acc ) - ( 1.0 + lambda_3_hat_acc )*( 1.0 + lambda_3_hat_acc ) * dv_3_acc / ( Rw * dtheta3_res );
+          }
+        }else{
+            d_lambda_3_hat_acc = ( Rw * ddtheta3_res - dv_3_acc ) / epsilon;
+        }
+
+        if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
+          if( dv_4_acc >= 0.0 ){// Acceleration
+            d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat_acc ) - dv_4_acc / ( Rw * dtheta4_res );
+          }else{// Deceleration
+            d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat_acc ) - ( 1.0 + lambda_4_hat_acc )*( 1.0 + lambda_4_hat_acc ) * dv_4_acc / ( Rw * dtheta4_res );
+          }
+        }else{
+            d_lambda_4_hat_acc = ( Rw * ddtheta4_res - dv_4_acc ) / epsilon;
+        }
+
+        lambda_1_hat     += d_lambda_1_hat * dt;
+        lambda_2_hat     += d_lambda_2_hat * dt;
+        lambda_3_hat     += d_lambda_3_hat * dt;
+        lambda_4_hat     += d_lambda_4_hat * dt;
+
+        lambda_1_hat_acc += d_lambda_1_hat_acc * dt;
+        lambda_2_hat_acc += d_lambda_2_hat_acc * dt;
+        lambda_3_hat_acc += d_lambda_3_hat_acc * dt;
+        lambda_4_hat_acc += d_lambda_4_hat_acc * dt;
+        // * Slip Ratio Observer
 
         // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
 
@@ -834,7 +1063,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         
         // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
-
 
         vx_res = (Rw / 4.0) * (dtheta1_res - dtheta2_res + dtheta3_res - dtheta4_res);// [m/sec]
         vy_res = (Rw / 4.0) * (dtheta1_res + dtheta2_res + dtheta3_res + dtheta4_res);
@@ -847,6 +1075,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         y_res   += vy_res   * dt;
         phi_res += dphi_res * dt;// [rad]
 
+        #ifdef Enable_WOB_Force_Dimension
+
+        #endif
+
         direc1 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1);
         direc2 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim3);
         direc3 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8);
@@ -854,13 +1086,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        if( t < t_experiment ){
-          // vx_cmd = 0.5;
-          vy_cmd = 0.5;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-        }
+        // if( t < t_experiment ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = 0.5;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -918,6 +1150,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.5;// Period T is 2pi / omega
         // r     = 0.8;
 
+        // if( t < 3.0 ){
+        //   omega = 0.5;
+        // }else if( t < 6.0 ){
+        //   omega = 0.6;
+        // }else if( t < 9.0 ){
+        //   omega = 0.3;
+        // }else if( t < 12.0 ){
+        //   omega = 0.6;
+        // }else{
+        //   omega = 0.0;
+        // }
+
         // if(t < t_experiment){
         //   vx_cmd   = 0.0;
         //   vy_cmd   = r * omega;
@@ -966,10 +1210,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Mz_ref = Jz * ddphi_ref;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
-        fd1_ref = 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
-        fd2_ref = 1.0 / 4.0 * ( - fx_ref + fy_ref - ( L + W ) * Mz_ref );
-        fd3_ref = 1.0 / 4.0 * (   fx_ref + fy_ref + ( L + W ) * Mz_ref );
-        fd4_ref = 1.0 / 4.0 * ( - fx_ref + fy_ref + ( L + W ) * Mz_ref );
+        fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
+        fd2_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        fd3_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + ( L + W ) * Mz_ref );
+        fd4_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + ( L + W ) * Mz_ref );
 
         // * I
         // Ki_df_integral1 += Ki_df * dt * ( fd1_ref - fd_hat1 );
@@ -1092,18 +1336,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // * For angular acceleration experiment
 
         // vx_cmd = 0.3;
-        // vy_cmd = 0.5;
-        dphi_cmd = 0.5;
+        vy_cmd = 0.3;
+        // dphi_cmd = 0.5;
 
         dtheta1_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;// [rad/sec]
         dtheta2_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd - 6.0 * dphi_cmd;
         dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
         dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
-        ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
-        ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
+        // ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
+        // ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
         ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
-        ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
+        // ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
         // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
         #endif
 
@@ -1312,7 +1556,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         fd_hat3 = tau_dfob3 / Rw * sqrt(2.0);
         fd_hat4 = tau_dfob4 / Rw * sqrt(2.0);
 
-        fx_hat = 1.0 / Rw             * (   tau_dfob1 - tau_dfob2 + tau_dfob3 - tau_dfob4 );
+        fx_hat = 1.0 / Rw             * (   tau_dfob1 - tau_dfob2 + tau_dfob3 - tau_dfob4 );// Substantially, 1.0 / sqrt(2.0) * fd : as of 2021/01/08
         fy_hat = 1.0 / Rw             * (   tau_dfob1 + tau_dfob2 + tau_dfob3 + tau_dfob4 );
         Mz_hat = 1.0 / Rw * ( L + W ) * ( - tau_dfob1 - tau_dfob2 + tau_dfob3 + tau_dfob4 );
 
@@ -1465,10 +1709,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           ddtheta3_ref_SRAM[i_save] = ddtheta3_ref;
           ddtheta4_ref_SRAM[i_save] = ddtheta4_ref;
 
-          i1_ref_SRAM[i_save] = i1_ref;
-          i2_ref_SRAM[i_save] = i2_ref;
-          i3_ref_SRAM[i_save] = i3_ref;
-          i4_ref_SRAM[i_save] = i4_ref;
+          ddtheta1_res_SRAM[i_save] = ddtheta1_res;
+          ddtheta2_res_SRAM[i_save] = ddtheta2_res;
+          ddtheta3_res_SRAM[i_save] = ddtheta3_res;
+          ddtheta4_res_SRAM[i_save] = ddtheta4_res;
+
+          // i1_ref_SRAM[i_save] = i1_ref;
+          // i2_ref_SRAM[i_save] = i2_ref;
+          // i3_ref_SRAM[i_save] = i3_ref;
+          // i4_ref_SRAM[i_save] = i4_ref;
 
           ia1_ref_SRAM[i_save] = ia1_ref;
           ia2_ref_SRAM[i_save] = ia2_ref;
@@ -1519,6 +1768,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           Acc_x_SRAM[i_save] = Acc_x;//Acc.x;
           Acc_y_SRAM[i_save] = Acc_y;//Acc.y;
           Acc_z_SRAM[i_save] = Acc_z;//Acc.z;
+
+          Acc_x_correct_SRAM[i_save] = Acc_x_correct;
+          Acc_y_correct_SRAM[i_save] = Acc_y_correct;
+          Acc_z_correct_SRAM[i_save] = Acc_z_correct;
+
+          Acc_x_LPF_SRAM[i_save] = Acc_x_LPF;
+          Acc_y_LPF_SRAM[i_save] = Acc_y_LPF;
+
+          lambda_1_hat_SRAM[i_save] = lambda_1_hat;
+          lambda_2_hat_SRAM[i_save] = lambda_2_hat;
+          lambda_3_hat_SRAM[i_save] = lambda_3_hat;
+          lambda_4_hat_SRAM[i_save] = lambda_4_hat;
+
+          lambda_1_hat_acc_SRAM[i_save] = lambda_1_hat_acc;
+          lambda_2_hat_acc_SRAM[i_save] = lambda_2_hat_acc;
+          lambda_3_hat_acc_SRAM[i_save] = lambda_3_hat_acc;
+          lambda_4_hat_acc_SRAM[i_save] = lambda_4_hat_acc;
 
           i_save++;
         }
@@ -1635,10 +1901,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", ddtheta3_ref_SRAM[i_output]);
           printf("%f, ", ddtheta4_ref_SRAM[i_output]);
 
-          printf("%f, ", i1_ref_SRAM[i_output]);
-          printf("%f, ", i2_ref_SRAM[i_output]);
-          printf("%f, ", i3_ref_SRAM[i_output]);
-          printf("%f, ", i4_ref_SRAM[i_output]);
+          printf("%f, ", ddtheta1_res_SRAM[i_output]);
+          printf("%f, ", ddtheta2_res_SRAM[i_output]);
+          printf("%f, ", ddtheta3_res_SRAM[i_output]);
+          printf("%f, ", ddtheta4_res_SRAM[i_output]);
+
+          // printf("%f, ", i1_ref_SRAM[i_output]);
+          // printf("%f, ", i2_ref_SRAM[i_output]);
+          // printf("%f, ", i3_ref_SRAM[i_output]);
+          // printf("%f, ", i4_ref_SRAM[i_output]);
 
           printf("%f, ", ia1_ref_SRAM[i_output]);
           printf("%f, ", ia2_ref_SRAM[i_output]);
@@ -1683,6 +1954,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Acc_x_SRAM[i_output]);
           printf("%f, ", Acc_y_SRAM[i_output]);
           printf("%f, ", Acc_z_SRAM[i_output]);
+
+          printf("%f, ", Acc_x_correct_SRAM[i_output]);
+          printf("%f, ", Acc_y_correct_SRAM[i_output]);
+          printf("%f, ", Acc_z_correct_SRAM[i_output]);
+
+          printf("%f, ", lambda_1_hat_SRAM[i_output]);
+          printf("%f, ", lambda_2_hat_SRAM[i_output]);
+          printf("%f, ", lambda_3_hat_SRAM[i_output]);
+          printf("%f, ", lambda_4_hat_SRAM[i_output]);
+
+          printf("%f, ", lambda_1_hat_acc_SRAM[i_output]);
+          printf("%f, ", lambda_2_hat_acc_SRAM[i_output]);
+          printf("%f, ", lambda_3_hat_acc_SRAM[i_output]);
+          printf("%f, ", lambda_4_hat_acc_SRAM[i_output]);
 
           printf("\r\n");
         }
