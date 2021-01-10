@@ -618,7 +618,8 @@ float Acc_x_correct_pre = 0.0;// Space(Absolute) coordinate system
 float Acc_y_correct_pre = 0.0;
 float Acc_z_correct_pre = 0.0;
 
-#define G_LPF_acc 100.0f // [rad/sec]
+#define G_LPF_acc 400.0f // [rad/sec]
+#define G_HPF_acc 100.0f // [rad/sec]
 
 float Acc_x_LPF = 0.0;
 float Acc_y_LPF = 0.0;
@@ -778,6 +779,7 @@ float Acc_z_correct_SRAM[N_SRAM] = {};
 float Acc_x_LPF_SRAM[N_SRAM] = {};
 float Acc_y_LPF_SRAM[N_SRAM] = {};
 // float Acc_z_LPF_SRAM[N_SRAM] = {};
+float d_yawrate_SRAM[N_SRAM] = {};
 
 float lambda_1_hat_SRAM[N_SRAM] = {};
 float lambda_2_hat_SRAM[N_SRAM] = {};
@@ -881,23 +883,43 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Acc_y = -Acc.y;// Direction is opposite, due to inertial force
         Acc_z = -Acc.z;// Add minus - : as of 2021/01/09
 
-        yaw   = yaw   * 2.0 * pi / 360.0;// [rad] Convert degree to rad
-        roll  = roll  * 2.0 * pi / 360.0;
-        pitch = pitch * 2.0 * pi / 360.0;
+        yaw   = -yaw   * 2.0 * pi / 360.0;// [rad] Convert degree to rad
+        roll  = -roll  * 2.0 * pi / 360.0;
+        pitch = -pitch * 2.0 * pi / 360.0;
 
-        Acc_x_correct = cos(roll)*cos(pitch)                                *Acc_x + sin(roll)*cos(pitch)                                *Acc_y - sin(pitch)         *Acc_z;
-        Acc_y_correct = ( cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*sin(yaw)+cos(roll)*cos(yaw) )*Acc_y + cos(pitch)*sin(yaw)*Acc_z;
-        Acc_z_correct = ( cos(roll)*sin(pitch)*cos(yaw)+sin(roll)*sin(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw) )*Acc_y + cos(pitch)*cos(yaw)*Acc_z;
+        yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;// [rad/sec] // ! Direction is not confirmed yet.
+        roll_rate  = roll_rate  * 2.0 * pi / 360.0;
+        pitch_rate = pitch_rate * 2.0 * pi / 360.0;
+
+        // Acc_x_correct = cos(roll)*cos(pitch)                                *Acc_x + sin(roll)*cos(pitch)                                *Acc_y - sin(pitch)         *Acc_z;
+        // Acc_y_correct = ( cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*sin(yaw)+cos(roll)*cos(yaw) )*Acc_y + cos(pitch)*sin(yaw)*Acc_z;
+        // Acc_z_correct = ( cos(roll)*sin(pitch)*cos(yaw)+sin(roll)*sin(yaw) )*Acc_x + ( sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw) )*Acc_y + cos(pitch)*cos(yaw)*Acc_z;
+
+        // Acc_y_correct = cos(roll)*cos(pitch)                                *Acc_y + sin(roll)*cos(pitch)                                *(-Acc_x) - sin(pitch)         *Acc_z;
+        // Acc_x_correct = ( cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw) )*Acc_y + ( sin(roll)*sin(pitch)*sin(yaw)+cos(roll)*cos(yaw) )*(-Acc_x) + cos(pitch)*sin(yaw)*Acc_z;
+        // Acc_x_correct = - Acc_x_correct;
+        // Acc_z_correct = ( cos(roll)*sin(pitch)*cos(yaw)+sin(roll)*sin(yaw) )*Acc_y + ( sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw) )*(-Acc_x) + cos(pitch)*cos(yaw)*Acc_z;
+
+        // Acc_y_correct = cos(roll)*cos(pitch)                                *Acc_y + sin(roll)*cos(pitch)                                *(-Acc_x) - sin(pitch)         *Acc_z;
+        // Acc_x_correct = ( cos(roll)*sin(pitch)*sin(0.0)-sin(roll)*cos(0.0) )*Acc_y + ( sin(roll)*sin(pitch)*sin(0.0)+cos(roll)*cos(0.0) )*(-Acc_x) + cos(pitch)*sin(0.0)*Acc_z;
+        // Acc_x_correct = - Acc_x_correct;
+        // Acc_z_correct = ( cos(roll)*sin(pitch)*cos(0.0)+sin(roll)*sin(0.0) )*Acc_y + ( sin(roll)*sin(pitch)*cos(0.0)-cos(roll)*sin(0.0) )*(-Acc_x) + cos(pitch)*cos(0.0)*Acc_z;
+
+        Acc_y_correct = cos(roll)*cos(pitch)                                *Acc_y + sin(roll)*cos(pitch)                                *(-Acc_x) - sin(pitch)         *Acc_z;
+        Acc_x_correct = -sin(roll)*Acc_y +  cos(roll)*(-Acc_x);
+        Acc_x_correct = - Acc_x_correct;
+        Acc_z_correct = cos(roll)*sin(pitch)*Acc_y + sin(roll)*sin(pitch)*(-Acc_x) + cos(pitch)*Acc_z;
 
         Acc_x_LPF = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * Acc_x_LPF_pre + G_LPF_acc * dt * ( Acc_x_correct + Acc_x_correct_pre ) );// LPF
         Acc_y_LPF = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * Acc_y_LPF_pre + G_LPF_acc * dt * ( Acc_y_correct + Acc_y_correct_pre ) );// LPF
+
+        // Acc_x_LPF = 1.0 / (2.0 + G_HPF_acc * dt) * ( (2.0 - G_HPF_acc * dt) * Acc_x_LPF_pre + 2.0 * ( Acc_x_correct - Acc_x_correct_pre ) );// HPF
+        // Acc_y_LPF = 1.0 / (2.0 + G_HPF_acc * dt) * ( (2.0 - G_HPF_acc * dt) * Acc_y_LPF_pre + 2.0 * ( Acc_y_correct - Acc_y_correct_pre ) );// HPF
+
         d_yawrate = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * d_yawrate_pre + 2.0 * G_LPF_acc * (yaw_rate - yaw_rate_pre) );// Pseudo Derivative : ddphi_res
 
         yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert this value to definition in modeling 
 
-        yaw_rate   = yaw_rate   * 2.0 * pi / 360.0;// ! Direction is not confirmed yet.
-        roll_rate  = roll_rate  * 2.0 * pi / 360.0;
-        pitch_rate = pitch_rate * 2.0 * pi / 360.0;
 
         // if( vy_cmd > 0.0 ){
         //   G_notch1 = N_roller * ( dtheta1_cmd + dtheta2_cmd + dtheta3_cmd + dtheta4_cmd ) / 4.0;
@@ -973,7 +995,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
           }
         }else{
-            d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
+            // d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
         }
 
         if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
@@ -1779,6 +1801,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
           Acc_x_LPF_SRAM[i_save] = Acc_x_LPF;
           Acc_y_LPF_SRAM[i_save] = Acc_y_LPF;
+          d_yawrate_SRAM[i_save] = d_yawrate;
 
           lambda_1_hat_SRAM[i_save] = lambda_1_hat;
           lambda_2_hat_SRAM[i_save] = lambda_2_hat;
@@ -1962,6 +1985,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Acc_x_correct_SRAM[i_output]);
           printf("%f, ", Acc_y_correct_SRAM[i_output]);
           printf("%f, ", Acc_z_correct_SRAM[i_output]);
+
+          printf("%f, ", Acc_x_LPF_SRAM[i_output]);
+          printf("%f, ", Acc_y_LPF_SRAM[i_output]);
+          printf("%f, ", d_yawrate_SRAM[i_output]);
 
           printf("%f, ", lambda_1_hat_SRAM[i_output]);
           printf("%f, ", lambda_2_hat_SRAM[i_output]);
