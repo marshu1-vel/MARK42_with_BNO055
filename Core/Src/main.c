@@ -1,13 +1,13 @@
 /* USER CODE BEGIN Header */
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define angular_velocity_control
+// #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
 // #define Enable_WOB_Force_Dimension
 // #define Enable_PD_controller_av
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -1147,8 +1147,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        // omega = 0.5;// Period T is 2pi / omega
-        // r     = 0.8;
+        omega = 0.5;// Period T is 2pi / omega
+        r     = 0.8;
 
         // if( t < 3.0 ){
         //   omega = 0.5;
@@ -1162,11 +1162,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   omega = 0.0;
         // }
 
-        // if(t < t_experiment){
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = r * omega;
-        //   dphi_cmd = omega;
-        // }
+        if(t < t_experiment){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1344,10 +1348,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         dtheta3_cmd =  20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
         dtheta4_cmd = -20.0 * vx_cmd + 20.0 * vy_cmd + 6.0 * dphi_cmd;
 
-        // ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
-        // ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
+        ddtheta1_ref = Kp_av * (dtheta1_cmd - dtheta1_res);
+        ddtheta2_ref = Kp_av * (dtheta2_cmd - dtheta2_res);
         ddtheta3_ref = Kp_av * (dtheta3_cmd - dtheta3_res);
-        // ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
+        ddtheta4_ref = Kp_av * (dtheta4_cmd - dtheta4_res);
         // ddtheta4_ref = Kp_av_4 * (dtheta4_cmd - dtheta4_res);
         #endif
 
