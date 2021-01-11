@@ -160,7 +160,7 @@ float dtheta3_res_pre = 0.0;
 float dtheta4_res_pre = 0.0;
 
 #define G_LPF      50.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0 20.0
-#define G_LPF_ddth 30.0f // [rad/sec] : For pseudo derivative when calculating angular acceleration
+#define G_LPF_ddth 10.0f // [rad/sec] : For pseudo derivative when calculating angular acceleration
 
 float ddtheta1_res = 0.0;
 float ddtheta2_res = 0.0;
@@ -618,8 +618,9 @@ float Acc_x_correct_pre = 0.0;// Space(Absolute) coordinate system
 float Acc_y_correct_pre = 0.0;
 float Acc_z_correct_pre = 0.0;
 
-#define G_LPF_acc 400.0f // [rad/sec]
-#define G_HPF_acc 100.0f // [rad/sec]
+#define G_LPF_acc  400.0f // [rad/sec]
+#define G_LPF_gyro 100.0f //150.0f // [rad/sec]
+#define G_HPF_acc  100.0f // [rad/sec]
 
 float Acc_x_LPF = 0.0;
 float Acc_y_LPF = 0.0;
@@ -632,7 +633,7 @@ float Acc_z_LPF_pre = 0.0;
 
 
 // * Slip Ratio
-#define epsilon 0.001f // Prevent division by 0
+#define epsilon 0.1f//0.01f//0.001f // Prevent division by 0
 
 float lambda_1_hat = 0.0;// Estimated slip ratio when just encoder is utilized
 float lambda_2_hat = 0.0;
@@ -648,6 +649,23 @@ float dv_1 = 0.0;
 float dv_2 = 0.0;
 float dv_3 = 0.0;
 float dv_4 = 0.0;
+
+float dv_1_pre = 0.0;
+float dv_2_pre = 0.0;
+float dv_3_pre = 0.0;
+float dv_4_pre = 0.0;
+
+#define G_LPF_dv 100.0f // [rad/sec]
+
+float dv_1_LPF = 0.0;
+float dv_2_LPF = 0.0;
+float dv_3_LPF = 0.0;
+float dv_4_LPF = 0.0;
+
+float dv_1_LPF_pre = 0.0;
+float dv_2_LPF_pre = 0.0;
+float dv_3_LPF_pre = 0.0;
+float dv_4_LPF_pre = 0.0;
 
 float delta_dv = 0.0;
 
@@ -676,7 +694,7 @@ float M_z_dis_pre = 0.0;
 
 // * Save variables in SRAM
 // #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-#define N_SRAM 1000
+#define N_SRAM 600
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -790,6 +808,16 @@ float lambda_1_hat_acc_SRAM[N_SRAM] = {};
 float lambda_2_hat_acc_SRAM[N_SRAM] = {};
 float lambda_3_hat_acc_SRAM[N_SRAM] = {};
 float lambda_4_hat_acc_SRAM[N_SRAM] = {};
+
+float d_lambda_1_hat_SRAM[N_SRAM] = {};
+float d_lambda_2_hat_SRAM[N_SRAM] = {};
+float d_lambda_3_hat_SRAM[N_SRAM] = {};
+float d_lambda_4_hat_SRAM[N_SRAM] = {};
+
+float d_lambda_1_hat_acc_SRAM[N_SRAM] = {};
+float d_lambda_2_hat_acc_SRAM[N_SRAM] = {};
+float d_lambda_3_hat_acc_SRAM[N_SRAM] = {};
+float d_lambda_4_hat_acc_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 // * Command
@@ -916,7 +944,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // Acc_x_LPF = 1.0 / (2.0 + G_HPF_acc * dt) * ( (2.0 - G_HPF_acc * dt) * Acc_x_LPF_pre + 2.0 * ( Acc_x_correct - Acc_x_correct_pre ) );// HPF
         // Acc_y_LPF = 1.0 / (2.0 + G_HPF_acc * dt) * ( (2.0 - G_HPF_acc * dt) * Acc_y_LPF_pre + 2.0 * ( Acc_y_correct - Acc_y_correct_pre ) );// HPF
 
-        d_yawrate = 1.0 / (2.0 + G_LPF_acc * dt) * ( (2.0 - G_LPF_acc * dt) * d_yawrate_pre + 2.0 * G_LPF_acc * (yaw_rate - yaw_rate_pre) );// Pseudo Derivative : ddphi_res
+        d_yawrate = 1.0 / (2.0 + G_LPF_gyro * dt) * ( (2.0 - G_LPF_gyro * dt) * d_yawrate_pre + 2.0 * G_LPF_gyro * (yaw_rate - yaw_rate_pre) );// Pseudo Derivative : ddphi_res
 
         yaw   = yaw   * 2.0 * pi / 360.0 + yaw_initial;// [rad] Convert this value to definition in modeling 
 
@@ -976,56 +1004,137 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           // * Save previous values
 
         // * Slip Ratio Observer
-        delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );
+        delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );// 1.0112 * fd1,2,3,4
 
-        dv_1 = sqrt(2.0) * Mass * ( fd_hat1 + fd_hat3 ) - delta_dv;
-        dv_2 = sqrt(2.0) * Mass * ( fd_hat2 + fd_hat4 ) - delta_dv;
-        dv_3 = sqrt(2.0) * Mass * ( fd_hat1 + fd_hat3 ) + delta_dv;
-        dv_4 = sqrt(2.0) * Mass * ( fd_hat2 + fd_hat4 ) + delta_dv;
+        dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - delta_dv;
+        dv_2 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) - delta_dv;
+        dv_3 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) + delta_dv;
+        dv_4 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) + delta_dv;
+
+        dv_1_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_1_LPF_pre + G_LPF_dv * dt * ( dv_1 + dv_1_pre ) );// LPF
+        dv_2_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_2_LPF_pre + G_LPF_dv * dt * ( dv_2 + dv_2_pre ) );// LPF
+        dv_3_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_3_LPF_pre + G_LPF_dv * dt * ( dv_3 + dv_3_pre ) );// LPF
+        dv_4_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_4_LPF_pre + G_LPF_dv * dt * ( dv_4 + dv_4_pre ) );// LPF
+
+          // * Save previous values
+          dv_1_pre = dv_1;
+          dv_2_pre = dv_2;
+          dv_3_pre = dv_3;
+          dv_4_pre = dv_4;
+
+          dv_1_LPF_pre = dv_1_LPF;
+          dv_2_LPF_pre = dv_2_LPF;
+          dv_3_LPF_pre = dv_3_LPF;
+          dv_4_LPF_pre = dv_4_LPF;
+          // * Save previous values
 
         dv_1_acc =   Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
         dv_2_acc = - Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
         dv_3_acc =   Acc_x_LPF + Acc_y_LPF + ( L + W ) * d_yawrate;
         dv_4_acc = - Acc_x_LPF + Acc_y_LPF + ( L + W ) * d_yawrate;
         
+        // if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
+        //   if( dv_1 >= 0.0 ){// Acceleration
+        //     d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+        //     // printf("1 \r\n");
+        //   }else{// Deceleration
+        //     d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
+        //     // printf("2 \r\n");
+        //   }
+        // }else{
+        //     // d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
+        //     d_lambda_1_hat = 0.0;
+        //     lambda_1_hat = 0.0;
+        //     // printf("3 \r\n");
+        // }
+        // // if( dtheta1_res == )
+
+        // if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
+        //   if( dv_2 >= 0.0 ){// Acceleration
+        //     d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
+        //   }else{// Deceleration
+        //     d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
+        //   }
+        // }else{
+        //     // d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
+        //     d_lambda_2_hat = 0.0;
+        //     lambda_2_hat = 0.0;
+        // }
+
+        // if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
+        //   if( dv_3 >= 0.0 ){// Acceleration
+        //     d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
+        //   }else{// Deceleration
+        //     d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
+        //   }
+        // }else{
+        //     // d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
+        //     d_lambda_3_hat = 0.0;
+        //     lambda_3_hat = 0.0;
+        // }
+
+        // if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
+        //   if( dv_4 >= 0.0 ){// Acceleration
+        //     d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
+        //   }else{// Deceleration
+        //     d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
+        //   }
+        // }else{
+        //     // d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
+        //     d_lambda_4_hat = 0.0;
+        //     lambda_4_hat = 0.0;
+        // }
+
         if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
-          if( dv_1 >= 0.0 ){// Acceleration
-            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+          if( dv_1_LPF >= 0.0 ){// Acceleration
+            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1_LPF / ( Rw * dtheta1_res );
+            // printf("1 \r\n");
           }else{// Deceleration
-            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
+            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1_LPF / ( Rw * dtheta1_res );
+            // printf("2 \r\n");
           }
         }else{
             // d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
+            d_lambda_1_hat = 0.0;
+            lambda_1_hat = 0.0;
+            // printf("3 \r\n");
         }
+        // if( dtheta1_res == )
 
         if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-          if( dv_2 >= 0.0 ){// Acceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
+          if( dv_2_LPF >= 0.0 ){// Acceleration
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2_LPF / ( Rw * dtheta2_res );
           }else{// Deceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2_LPF / ( Rw * dtheta2_res );
           }
         }else{
-            d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
+            // d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
+            d_lambda_2_hat = 0.0;
+            lambda_2_hat = 0.0;
         }
 
         if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-          if( dv_3 >= 0.0 ){// Acceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
+          if( dv_3_LPF >= 0.0 ){// Acceleration
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3_LPF / ( Rw * dtheta3_res );
           }else{// Deceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3_LPF / ( Rw * dtheta3_res );
           }
         }else{
-            d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
+            // d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
+            d_lambda_3_hat = 0.0;
+            lambda_3_hat = 0.0;
         }
 
         if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-          if( dv_4 >= 0.0 ){// Acceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
+          if( dv_4_LPF >= 0.0 ){// Acceleration
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4_LPF / ( Rw * dtheta4_res );
           }else{// Deceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4_LPF / ( Rw * dtheta4_res );
           }
         }else{
-            d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
+            // d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
+            d_lambda_4_hat = 0.0;
+            lambda_4_hat = 0.0;
         }
 
         if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
@@ -1035,7 +1144,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
           }
         }else{
-            d_lambda_1_hat_acc = ( Rw * ddtheta1_res - dv_1_acc ) / epsilon;
+            // d_lambda_1_hat_acc = ( Rw * ddtheta1_res - dv_1_acc ) / epsilon;
+            d_lambda_1_hat_acc = 0.0;
+            lambda_1_hat_acc = 0.0;
         }
 
         if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
@@ -1045,7 +1156,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat_acc ) - ( 1.0 + lambda_2_hat_acc )*( 1.0 + lambda_2_hat_acc ) * dv_2_acc / ( Rw * dtheta2_res );
           }
         }else{
-            d_lambda_2_hat_acc = ( Rw * ddtheta2_res - dv_2_acc ) / epsilon;
+            // d_lambda_2_hat_acc = ( Rw * ddtheta2_res - dv_2_acc ) / epsilon;
+            d_lambda_2_hat_acc = 0.0;
+            lambda_2_hat_acc = 0.0;
         }
 
         if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
@@ -1055,7 +1168,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat_acc ) - ( 1.0 + lambda_3_hat_acc )*( 1.0 + lambda_3_hat_acc ) * dv_3_acc / ( Rw * dtheta3_res );
           }
         }else{
-            d_lambda_3_hat_acc = ( Rw * ddtheta3_res - dv_3_acc ) / epsilon;
+            // d_lambda_3_hat_acc = ( Rw * ddtheta3_res - dv_3_acc ) / epsilon;
+            d_lambda_3_hat_acc = 0.0;
+            lambda_3_hat_acc = 0.0;
         }
 
         if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
@@ -1065,7 +1180,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
             d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat_acc ) - ( 1.0 + lambda_4_hat_acc )*( 1.0 + lambda_4_hat_acc ) * dv_4_acc / ( Rw * dtheta4_res );
           }
         }else{
-            d_lambda_4_hat_acc = ( Rw * ddtheta4_res - dv_4_acc ) / epsilon;
+            // d_lambda_4_hat_acc = ( Rw * ddtheta4_res - dv_4_acc ) / epsilon;
+            d_lambda_4_hat_acc = 0.0;
+            lambda_4_hat_acc = 0.0;
         }
 
         lambda_1_hat     += d_lambda_1_hat * dt;
@@ -1108,13 +1225,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        // if( t < t_experiment ){
-        //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        // }
+        if( t < t_experiment -1.0 ){
+          vx_cmd = 0.5;
+          // vy_cmd = -0.5;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1169,8 +1286,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        omega = 0.5;// Period T is 2pi / omega
-        r     = 0.8;
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.5;
 
         // if( t < 3.0 ){
         //   omega = 0.5;
@@ -1184,15 +1301,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   omega = 0.0;
         // }
 
-        if(t < t_experiment){
-          vx_cmd   = 0.0;
-          vy_cmd   = r * omega;
-          dphi_cmd = omega;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if(t < t_experiment - 1.0){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = r * omega;
+        //   dphi_cmd = omega;
+        // }else{
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1713,6 +1830,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // printf("\r\n");
         // }
 
+        // if(i_save < N_SRAM){
         if(loop % 10 == 0 && i_save < N_SRAM){
           // if(loop % 1000 == 0){
           //   printf("save");
@@ -1813,6 +1931,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           lambda_3_hat_acc_SRAM[i_save] = lambda_3_hat_acc;
           lambda_4_hat_acc_SRAM[i_save] = lambda_4_hat_acc;
 
+          d_lambda_1_hat_SRAM[i_save] = d_lambda_1_hat;
+          d_lambda_2_hat_SRAM[i_save] = d_lambda_2_hat;
+          d_lambda_3_hat_SRAM[i_save] = d_lambda_3_hat;
+          d_lambda_4_hat_SRAM[i_save] = d_lambda_4_hat;
+
+          d_lambda_1_hat_acc_SRAM[i_save] = d_lambda_1_hat_acc;
+          d_lambda_2_hat_acc_SRAM[i_save] = d_lambda_2_hat_acc;
+          d_lambda_3_hat_acc_SRAM[i_save] = d_lambda_3_hat_acc;
+          d_lambda_4_hat_acc_SRAM[i_save] = d_lambda_4_hat_acc;
+
           i_save++;
         }
 
@@ -1878,6 +2006,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           tau_dfob1_pre = 0.0;
           tau_dfob1_pre = 0.0;
           tau_dfob1_pre = 0.0;
+          
+          integral_tau_dfob1 = 0.0;
+          integral_tau_dfob2 = 0.0;
+          integral_tau_dfob3 = 0.0;
+          integral_tau_dfob4 = 0.0;
 
           isFirst++;
         }
@@ -1999,6 +2132,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", lambda_2_hat_acc_SRAM[i_output]);
           printf("%f, ", lambda_3_hat_acc_SRAM[i_output]);
           printf("%f, ", lambda_4_hat_acc_SRAM[i_output]);
+
+          printf("%f, ", d_lambda_1_hat_SRAM[i_output]);
+          printf("%f, ", d_lambda_2_hat_SRAM[i_output]);
+          printf("%f, ", d_lambda_3_hat_SRAM[i_output]);
+          printf("%f, ", d_lambda_4_hat_SRAM[i_output]);
+          
+          printf("%f, ", d_lambda_1_hat_acc_SRAM[i_output]);
+          printf("%f, ", d_lambda_2_hat_acc_SRAM[i_output]);
+          printf("%f, ", d_lambda_3_hat_acc_SRAM[i_output]);
+          printf("%f, ", d_lambda_4_hat_acc_SRAM[i_output]);
 
           printf("\r\n");
         }
