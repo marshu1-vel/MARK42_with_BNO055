@@ -3,11 +3,11 @@
 // #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
-// #define Enable_WOB_Force_Dimension
+// #define Enable_WOB
 // #define Enable_PD_controller_av
-// #define Enable_Vehicle_Velocity_control
+#define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-#define Enable_Driving_Force_Control
+// #define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -686,15 +686,28 @@ float dv_4_acc = 0.0;
 // * Slip Ratio
 
 // * WOB
-#define G_WOB 50.0f // [rad/sec]
-float M_z_dis = 0.0;// For WOB Force Dimension
-float M_z_dis_pre = 0.0;
+#define G_WOB 0.1f//1.0f//0.01f // [rad/sec]
+float WOB_x_input = 0.0;
+float WOB_y_input = 0.0;
+// float WOB_phi_input = 0.0;
+
+// float WOB_x_input_pre = 0.0;
+// float WOB_y_input_pre = 0.0;
+// float WOB_phi_input_pre = 0.0;
+
+float Fx_dis = 0.0;// [N]
+float Fy_dis = 0.0;
+float Mz_dis = 0.0;// [Nm] For WOB Force Dimension
+
+float Fx_dis_pre = 0.0;
+float Fy_dis_pre = 0.0;
+float Mz_dis_pre = 0.0;
 // * WOB
 
 
 // * Save variables in SRAM
-// #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-#define N_SRAM 600
+#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+// #define N_SRAM 600
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -1214,10 +1227,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         y_res   += vy_res   * dt;
         phi_res += dphi_res * dt;// [rad]
 
-        #ifdef Enable_WOB_Force_Dimension
-
-        #endif
-
         direc1 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1);
         direc2 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim3);
         direc3 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim8);
@@ -1225,13 +1234,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        if( t < t_experiment -1.0 ){
-          vx_cmd = 0.5;
-          // vy_cmd = -0.5;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-        }
+        // if( t < t_experiment -1.0 ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = -0.5;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1287,7 +1296,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
         // omega = 0.5;// Period T is 2pi / omega
-        // r     = 0.5;
+        // r     = 0.75;
+        omega = 0.3;
+        r     = 0.45;
 
         // if( t < 3.0 ){
         //   omega = 0.5;
@@ -1301,15 +1312,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   omega = 0.0;
         // }
 
-        // if(t < t_experiment - 1.0){
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = r * omega;
-        //   dphi_cmd = omega;
-        // }else{
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if(t < t_experiment - 1.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1348,9 +1359,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
         ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
 
-        fx_ref = Mass * ddx_ref;
-        fy_ref = Mass * ddy_ref;
-        Mz_ref = Jz * ddphi_ref;
+        fx_ref = Mass * ddx_ref + Fx_dis;
+        fy_ref = Mass * ddy_ref + Fy_dis;
+        Mz_ref = Jz * ddphi_ref + Mz_dis;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
         fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
@@ -1448,9 +1459,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);
-        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);
-        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res);
+        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res) + Fx_dis / Mass;
+        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res) + Fy_dis / Mass;
+        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res) + Mz_dis / Jz;
 
         ddtheta1_ref =  20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;// [rad/sec^2]
         ddtheta2_ref = -20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;
@@ -1703,6 +1714,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         fy_hat = 1.0 / Rw             * (   tau_dfob1 + tau_dfob2 + tau_dfob3 + tau_dfob4 );
         Mz_hat = 1.0 / Rw * ( L + W ) * ( - tau_dfob1 - tau_dfob2 + tau_dfob3 + tau_dfob4 );
 
+        #endif
+
+        #ifdef Enable_WOB
+        WOB_x_input   = fx_ref - Mass * Acc_x_correct;
+        WOB_y_input   = fy_ref - Mass * Acc_y_correct;
+        // WOB_phi_input = Mz_ref - Jz   * 
+        
+        // F_x_dis = 1.0 / (2.0 + G_WOB * dt) * ( (2.0 - G_WOB * dt) * F_x_dis_pre + G_WOB * dt * ( WOB_x_input + WOB_x_input_pre ) );// LPF
+        // F_y_dis = 1.0 / (2.0 + G_WOB * dt) * ( (2.0 - G_WOB * dt) * F_y_dis_pre + G_WOB * dt * ( WOB_y_input + WOB_y_input_pre ) );// LPF
+
+        Fx_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fx_dis_pre + G_WOB * dt * WOB_x_input );// LPF : Backward Difference
+        Fy_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fy_dis_pre + G_WOB * dt * WOB_y_input );// LPF : Backward Difference
+        Mz_dis = 1.0 / (1.0 + G_WOB * dt) * ( Mz_dis_pre + G_WOB * dt * Mz_ref - G_WOB * Jz * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+
+          // * Save previous values
+          // WOB_x_input_pre = WOB_x_input;
+          // WOB_y_input_pre = WOB_y_input;
+
+          Fx_dis_pre = Fx_dis;
+          Fy_dis_pre = Fy_dis;
+          Mz_dis_pre = Mz_dis;
+          // * Save previous values
         #endif
 
         ia1_ref = i1_ref + i1_comp;
