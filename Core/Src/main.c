@@ -3,7 +3,9 @@
 // #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
-// #define Enable_WOB
+#define Enable_WOB
+// #define Enable_WOB_FB
+#define Disable_WOB_FB
 // #define Enable_PD_controller_av
 #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
@@ -160,7 +162,7 @@ float dtheta3_res_pre = 0.0;
 float dtheta4_res_pre = 0.0;
 
 #define G_LPF      50.0f // [rad/sec] : Up to half of sampling frequency 200.0 50.0 20.0
-#define G_LPF_ddth 10.0f // [rad/sec] : For pseudo derivative when calculating angular acceleration
+#define G_LPF_ddth 30.0f // [rad/sec] : For pseudo derivative when calculating angular acceleration
 
 float ddtheta1_res = 0.0;
 float ddtheta2_res = 0.0;
@@ -619,7 +621,7 @@ float Acc_y_correct_pre = 0.0;
 float Acc_z_correct_pre = 0.0;
 
 #define G_LPF_acc  400.0f // [rad/sec]
-#define G_LPF_gyro 100.0f //150.0f // [rad/sec]
+#define G_LPF_gyro 50.0f //150.0f // [rad/sec]
 #define G_HPF_acc  100.0f // [rad/sec]
 
 float Acc_x_LPF = 0.0;
@@ -655,6 +657,11 @@ float dv_2_pre = 0.0;
 float dv_3_pre = 0.0;
 float dv_4_pre = 0.0;
 
+float v1_hat = 0.0;
+float v2_hat = 0.0;
+float v3_hat = 0.0;
+float v4_hat = 0.0;
+
 #define G_LPF_dv 100.0f // [rad/sec]
 
 float dv_1_LPF = 0.0;
@@ -683,10 +690,23 @@ float dv_1_acc = 0.0;
 float dv_2_acc = 0.0;
 float dv_3_acc = 0.0;
 float dv_4_acc = 0.0;
+
+float v1_hat_acc = 0.0;
+float v2_hat_acc = 0.0;
+float v3_hat_acc = 0.0;
+float v4_hat_acc = 0.0;
 // * Slip Ratio
 
 // * WOB
-#define G_WOB 0.1f//1.0f//0.01f // [rad/sec]
+#define G_WOB 50.0f//1.0f//0.01f // [rad/sec]
+
+#ifdef Enable_WOB_FB
+#define WOB_FB 1.0f // 1.0 : With feedback
+#endif
+
+#ifdef Disable_WOB_FB
+#define WOB_FB 0.0f // 0 : No feedback
+#endif
 float WOB_x_input = 0.0;
 float WOB_y_input = 0.0;
 // float WOB_phi_input = 0.0;
@@ -697,17 +717,19 @@ float WOB_y_input = 0.0;
 
 float Fx_dis = 0.0;// [N]
 float Fy_dis = 0.0;
+float ddphi_dis = 0.0;// [rad/sec^2] For WOB Acceleration Dimension
 float Mz_dis = 0.0;// [Nm] For WOB Force Dimension
 
 float Fx_dis_pre = 0.0;
 float Fy_dis_pre = 0.0;
-float Mz_dis_pre = 0.0;
+float ddphi_dis_pre = 0.0;
+// float Mz_dis_pre = 0.0;
 // * WOB
 
 
 // * Save variables in SRAM
-#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-// #define N_SRAM 600
+// #define N_SRAM 1100 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 600
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -831,6 +853,10 @@ float d_lambda_1_hat_acc_SRAM[N_SRAM] = {};
 float d_lambda_2_hat_acc_SRAM[N_SRAM] = {};
 float d_lambda_3_hat_acc_SRAM[N_SRAM] = {};
 float d_lambda_4_hat_acc_SRAM[N_SRAM] = {};
+
+float Fx_dis_SRAM[N_SRAM] = {};
+float Fy_dis_SRAM[N_SRAM] = {};
+float Mz_dis_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 // * Command
@@ -977,17 +1003,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         yaw_rate_notch = 1.0 / ( 1.0 + 2.0*zeta1*G_notch1*dt + G_notch1*G_notch1*dt*dt ) * ( 2.0*(1.0+zeta1*G_notch1*dt)*yaw_rate_notch_pre - yaw_rate_notch_pre2 + (1.0 + G_notch1*G_notch1*dt*dt)*yaw_rate - 2.0*yaw_rate_pre + yaw_rate_pre2 );
         // * Notch Filter ( Band-stop Filter ) : Back Difference
 
-          // * Save previous values
-          Acc_x_correct_pre = Acc_x_correct;
-          Acc_y_correct_pre = Acc_y_correct;
-          d_yawrate_pre     = d_yawrate;
-
-          yaw_rate_pre2       = yaw_rate_pre;
-          yaw_rate_pre        = yaw_rate;
-          yaw_rate_notch_pre2 = yaw_rate_notch_pre;
-          yaw_rate_notch_pre  = yaw_rate_notch;
-          // * Save previous values
-
         if     ( yaw - yaw_pre > 2.0*pi/2.0 ) yaw_digit--;
         else if( yaw_pre - yaw > 2.0*pi/2.0 ) yaw_digit++;
         yaw_pre = yaw;
@@ -1019,15 +1034,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // * Slip Ratio Observer
         delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );// 1.0112 * fd1,2,3,4
 
-        dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - delta_dv;
-        dv_2 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) - delta_dv;
-        dv_3 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) + delta_dv;
-        dv_4 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) + delta_dv;
+        // dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - delta_dv - ( Fx_dis + Fy_dis ) / Mass + ( L + W ) / Jz * Mz_dis;// Just Encoder
+        // dv_2 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) - delta_dv + ( Fx_dis - Fy_dis ) / Mass + ( L + W ) / Jz * Mz_dis;
+        // dv_3 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) + delta_dv - ( Fx_dis + Fy_dis ) / Mass - ( L + W ) / Jz * Mz_dis;
+        // dv_4 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) + delta_dv + ( Fx_dis - Fy_dis ) / Mass - ( L + W ) / Jz * Mz_dis;
 
-        dv_1_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_1_LPF_pre + G_LPF_dv * dt * ( dv_1 + dv_1_pre ) );// LPF
-        dv_2_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_2_LPF_pre + G_LPF_dv * dt * ( dv_2 + dv_2_pre ) );// LPF
-        dv_3_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_3_LPF_pre + G_LPF_dv * dt * ( dv_3 + dv_3_pre ) );// LPF
-        dv_4_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_4_LPF_pre + G_LPF_dv * dt * ( dv_4 + dv_4_pre ) );// LPF
+        dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - ( Fx_dis + Fy_dis ) / Mass - ( L + W ) * d_yawrate;// Encoder + Gyro
+        dv_2 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) + ( Fx_dis - Fy_dis ) / Mass - ( L + W ) * d_yawrate;
+        dv_3 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - ( Fx_dis + Fy_dis ) / Mass + ( L + W ) * d_yawrate;
+        dv_4 = sqrt(2.0) / Mass * ( fd_hat2 + fd_hat4 ) + ( Fx_dis - Fy_dis ) / Mass + ( L + W ) * d_yawrate;
+
+        // dv_1_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_1_LPF_pre + G_LPF_dv * dt * ( dv_1 + dv_1_pre ) );// LPF
+        // dv_2_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_2_LPF_pre + G_LPF_dv * dt * ( dv_2 + dv_2_pre ) );// LPF
+        // dv_3_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_3_LPF_pre + G_LPF_dv * dt * ( dv_3 + dv_3_pre ) );// LPF
+        // dv_4_LPF = 1.0 / (2.0 + G_LPF_dv * dt) * ( (2.0 - G_LPF_dv * dt) * dv_4_LPF_pre + G_LPF_dv * dt * ( dv_4 + dv_4_pre ) );// LPF
+
+        dv_1_LPF = dv_1;
+        dv_2_LPF = dv_2;
+        dv_3_LPF = dv_3;
+        dv_4_LPF = dv_4;
 
           // * Save previous values
           dv_1_pre = dv_1;
@@ -1040,6 +1065,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           dv_3_LPF_pre = dv_3_LPF;
           dv_4_LPF_pre = dv_4_LPF;
           // * Save previous values
+
+        // d_yawrate = 0.0;
 
         dv_1_acc =   Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
         dv_2_acc = - Acc_x_LPF + Acc_y_LPF - ( L + W ) * d_yawrate;
@@ -1060,153 +1087,137 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //     lambda_1_hat = 0.0;
         //     // printf("3 \r\n");
         // }
-        // // if( dtheta1_res == )
-
-        // if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-        //   if( dv_2 >= 0.0 ){// Acceleration
-        //     d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
-        //   }else{// Deceleration
-        //     d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
-        //   }
-        // }else{
-        //     // d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
-        //     d_lambda_2_hat = 0.0;
-        //     lambda_2_hat = 0.0;
-        // }
-
-        // if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-        //   if( dv_3 >= 0.0 ){// Acceleration
-        //     d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
-        //   }else{// Deceleration
-        //     d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
-        //   }
-        // }else{
-        //     // d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
-        //     d_lambda_3_hat = 0.0;
-        //     lambda_3_hat = 0.0;
-        // }
-
-        // if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-        //   if( dv_4 >= 0.0 ){// Acceleration
-        //     d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
-        //   }else{// Deceleration
-        //     d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
-        //   }
-        // }else{
-        //     // d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
-        //     d_lambda_4_hat = 0.0;
-        //     lambda_4_hat = 0.0;
-        // }
 
         if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
-          if( dv_1_LPF >= 0.0 ){// Acceleration
-            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1_LPF / ( Rw * dtheta1_res );
-            // printf("1 \r\n");
+          if( Rw * fabsf(dtheta1_res) > fabsf(v1_hat) ){// Acceleration
+            d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+            lambda_1_hat  += d_lambda_1_hat * dt;
+            v1_hat = ( 1.0 - lambda_1_hat ) * Rw * dtheta1_res;
           }else{// Deceleration
-            d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1_LPF / ( Rw * dtheta1_res );
-            // printf("2 \r\n");
+            d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
+            lambda_1_hat  += d_lambda_1_hat * dt;
+            v1_hat = Rw * dtheta1_res / ( 1.0 + lambda_1_hat );
           }
         }else{
-            // d_lambda_1_hat = ( Rw * ddtheta1_res - dv_1 ) / epsilon;
-            d_lambda_1_hat = 0.0;
-            lambda_1_hat = 0.0;
-            // printf("3 \r\n");
+          d_lambda_1_hat = 0.0;
+          lambda_1_hat = 0.0;
         }
-        // if( dtheta1_res == )
 
         if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-          if( dv_2_LPF >= 0.0 ){// Acceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2_LPF / ( Rw * dtheta2_res );
+          if( Rw * fabsf(dtheta2_res) > fabsf(v2_hat) ){// Acceleration
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
+            lambda_2_hat  += d_lambda_2_hat * dt;
+            v2_hat = ( 1.0 - lambda_2_hat ) * Rw * dtheta2_res;
           }else{// Deceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2_LPF / ( Rw * dtheta2_res );
+            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
+            lambda_2_hat  += d_lambda_2_hat * dt;
+            v2_hat = Rw * dtheta2_res / ( 1.0 + lambda_2_hat );
           }
         }else{
-            // d_lambda_2_hat = ( Rw * ddtheta2_res - dv_2 ) / epsilon;
-            d_lambda_2_hat = 0.0;
-            lambda_2_hat = 0.0;
+          d_lambda_2_hat = 0.0;
+          lambda_2_hat = 0.0;
         }
 
         if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-          if( dv_3_LPF >= 0.0 ){// Acceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3_LPF / ( Rw * dtheta3_res );
+          if( Rw * fabsf(dtheta3_res) > fabsf(v3_hat) ){// Acceleration
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
+            lambda_3_hat  += d_lambda_3_hat * dt;
+            v3_hat = ( 1.0 - lambda_3_hat ) * Rw * dtheta3_res;
           }else{// Deceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3_LPF / ( Rw * dtheta3_res );
+            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
+            lambda_3_hat  += d_lambda_3_hat * dt;
+            v3_hat = Rw * dtheta3_res / ( 1.0 + lambda_3_hat );
           }
         }else{
-            // d_lambda_3_hat = ( Rw * ddtheta3_res - dv_3 ) / epsilon;
-            d_lambda_3_hat = 0.0;
-            lambda_3_hat = 0.0;
+          d_lambda_3_hat = 0.0;
+          lambda_3_hat = 0.0;
         }
 
         if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-          if( dv_4_LPF >= 0.0 ){// Acceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4_LPF / ( Rw * dtheta4_res );
+          if( Rw * fabsf(dtheta4_res) > fabsf(v4_hat) ){// Acceleration
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
+            lambda_4_hat  += d_lambda_4_hat * dt;
+            v4_hat = ( 1.0 - lambda_4_hat ) * Rw * dtheta4_res;
           }else{// Deceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4_LPF / ( Rw * dtheta4_res );
+            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
+            lambda_4_hat  += d_lambda_4_hat * dt;
+            v4_hat = Rw * dtheta4_res / ( 1.0 + lambda_4_hat );
           }
         }else{
-            // d_lambda_4_hat = ( Rw * ddtheta4_res - dv_4 ) / epsilon;
-            d_lambda_4_hat = 0.0;
-            lambda_4_hat = 0.0;
+          d_lambda_4_hat = 0.0;
+          lambda_4_hat = 0.0;
         }
 
         if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
-          if( dv_1_acc >= 0.0 ){// Acceleration
-            d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 - lambda_1_hat_acc ) - dv_1_acc / ( Rw * dtheta1_res );
+          if( Rw * fabsf(dtheta1_res) > fabsf(v1_hat_acc) ){// Acceleration
+            d_lambda_1_hat_acc = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat_acc ) - dv_1_acc / ( Rw * dtheta1_res );
+            lambda_1_hat_acc  += d_lambda_1_hat_acc * dt;
+            v1_hat_acc = ( 1.0 - lambda_1_hat_acc ) * Rw * dtheta1_res;
           }else{// Deceleration
-            d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
+            d_lambda_1_hat_acc = ddtheta1_ref / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
+            lambda_1_hat_acc  += d_lambda_1_hat_acc * dt;
+            v1_hat_acc = Rw * dtheta1_res / ( 1.0 + lambda_1_hat_acc );
           }
         }else{
-            // d_lambda_1_hat_acc = ( Rw * ddtheta1_res - dv_1_acc ) / epsilon;
-            d_lambda_1_hat_acc = 0.0;
-            lambda_1_hat_acc = 0.0;
+          d_lambda_1_hat_acc = 0.0;
+          lambda_1_hat_acc = 0.0;
         }
 
         if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-          if( dv_2_acc >= 0.0 ){// Acceleration
+          if( Rw * fabsf(dtheta2_res) > fabsf(v2_hat_acc) ){// Acceleration
             d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat_acc ) - dv_2_acc / ( Rw * dtheta2_res );
+            lambda_2_hat_acc  += d_lambda_2_hat_acc * dt;
+            v2_hat_acc = ( 1.0 - lambda_2_hat_acc ) * Rw * dtheta2_res;
           }else{// Deceleration
             d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat_acc ) - ( 1.0 + lambda_2_hat_acc )*( 1.0 + lambda_2_hat_acc ) * dv_2_acc / ( Rw * dtheta2_res );
+            lambda_2_hat_acc  += d_lambda_2_hat_acc * dt;
+            v2_hat_acc = Rw * dtheta2_res / ( 1.0 + lambda_2_hat_acc );
           }
         }else{
-            // d_lambda_2_hat_acc = ( Rw * ddtheta2_res - dv_2_acc ) / epsilon;
-            d_lambda_2_hat_acc = 0.0;
-            lambda_2_hat_acc = 0.0;
+          d_lambda_2_hat_acc = 0.0;
+          lambda_2_hat_acc = 0.0;
         }
 
         if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-          if( dv_3_acc >= 0.0 ){// Acceleration
+          if( Rw * fabsf(dtheta3_res) > fabsf(v3_hat_acc) ){// Acceleration
             d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat_acc ) - dv_3_acc / ( Rw * dtheta3_res );
+            lambda_3_hat_acc  += d_lambda_3_hat_acc * dt;
+            v3_hat_acc = ( 1.0 - lambda_3_hat_acc ) * Rw * dtheta3_res;
           }else{// Deceleration
             d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat_acc ) - ( 1.0 + lambda_3_hat_acc )*( 1.0 + lambda_3_hat_acc ) * dv_3_acc / ( Rw * dtheta3_res );
+            lambda_3_hat_acc  += d_lambda_3_hat_acc * dt;
+            v3_hat_acc = Rw * dtheta3_res / ( 1.0 + lambda_3_hat_acc );
           }
         }else{
-            // d_lambda_3_hat_acc = ( Rw * ddtheta3_res - dv_3_acc ) / epsilon;
-            d_lambda_3_hat_acc = 0.0;
-            lambda_3_hat_acc = 0.0;
+          d_lambda_3_hat_acc = 0.0;
+          lambda_3_hat_acc = 0.0;
         }
 
         if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-          if( dv_4_acc >= 0.0 ){// Acceleration
+          if( Rw * fabsf(dtheta4_res) > fabsf(v4_hat_acc) ){// Acceleration
             d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat_acc ) - dv_4_acc / ( Rw * dtheta4_res );
+            lambda_4_hat_acc  += d_lambda_4_hat_acc * dt;
+            v4_hat_acc = ( 1.0 - lambda_4_hat_acc ) * Rw * dtheta4_res;
           }else{// Deceleration
             d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat_acc ) - ( 1.0 + lambda_4_hat_acc )*( 1.0 + lambda_4_hat_acc ) * dv_4_acc / ( Rw * dtheta4_res );
+            lambda_4_hat_acc  += d_lambda_4_hat_acc * dt;
+            v4_hat_acc = Rw * dtheta4_res / ( 1.0 + lambda_4_hat_acc );
           }
         }else{
-            // d_lambda_4_hat_acc = ( Rw * ddtheta4_res - dv_4_acc ) / epsilon;
-            d_lambda_4_hat_acc = 0.0;
-            lambda_4_hat_acc = 0.0;
+          d_lambda_4_hat_acc = 0.0;
+          lambda_4_hat_acc = 0.0;
         }
 
-        lambda_1_hat     += d_lambda_1_hat * dt;
-        lambda_2_hat     += d_lambda_2_hat * dt;
-        lambda_3_hat     += d_lambda_3_hat * dt;
-        lambda_4_hat     += d_lambda_4_hat * dt;
+        // lambda_1_hat     += d_lambda_1_hat * dt;
+        // lambda_2_hat     += d_lambda_2_hat * dt;
+        // lambda_3_hat     += d_lambda_3_hat * dt;
+        // lambda_4_hat     += d_lambda_4_hat * dt;
 
-        lambda_1_hat_acc += d_lambda_1_hat_acc * dt;
-        lambda_2_hat_acc += d_lambda_2_hat_acc * dt;
-        lambda_3_hat_acc += d_lambda_3_hat_acc * dt;
-        lambda_4_hat_acc += d_lambda_4_hat_acc * dt;
+        // lambda_1_hat_acc += d_lambda_1_hat_acc * dt;
+        // lambda_2_hat_acc += d_lambda_2_hat_acc * dt;
+        // lambda_3_hat_acc += d_lambda_3_hat_acc * dt;
+        // lambda_4_hat_acc += d_lambda_4_hat_acc * dt;
+
         // * Slip Ratio Observer
 
         // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
@@ -1234,13 +1245,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        // if( t < t_experiment -1.0 ){
-        //   // vx_cmd = 0.5;
-        //   vy_cmd = -0.5;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        // }
+        if( t < t_experiment -1.0 ){
+          // vx_cmd = 0.5;
+          vy_cmd = 0.3;
+          // dphi_cmd = 1.0;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1295,10 +1308,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        // omega = 0.5;// Period T is 2pi / omega
-        // r     = 0.75;
-        omega = 0.3;
-        r     = 0.45;
+        omega = 0.5;// Period T is 2pi / omega
+        r     = 0.75;
+        // omega = 0.3;
+        // r     = 0.45;
 
         // if( t < 3.0 ){
         //   omega = 0.5;
@@ -1312,15 +1325,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   omega = 0.0;
         // }
 
-        if(t < t_experiment - 1.0){
-          vx_cmd   = 0.0;
-          vy_cmd   = r * omega;
-          dphi_cmd = omega;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if(t < t_experiment - 1.0){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = r * omega;
+        //   dphi_cmd = omega;
+        // }else{
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1359,9 +1372,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
         ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
 
-        fx_ref = Mass * ddx_ref + Fx_dis;
-        fy_ref = Mass * ddy_ref + Fy_dis;
-        Mz_ref = Jz * ddphi_ref + Mz_dis;
+        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
+        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
+        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
         fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
@@ -1459,9 +1472,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res) + Fx_dis / Mass;
-        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res) + Fy_dis / Mass;
-        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res) + Mz_dis / Jz;
+        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res) + WOB_FB * Fx_dis / Mass;
+        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res) + WOB_FB * Fy_dis / Mass;
+        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res) + WOB_FB * Mz_dis / Jz;
 
         ddtheta1_ref =  20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;// [rad/sec^2]
         ddtheta2_ref = -20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;
@@ -1726,7 +1739,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         Fx_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fx_dis_pre + G_WOB * dt * WOB_x_input );// LPF : Backward Difference
         Fy_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fy_dis_pre + G_WOB * dt * WOB_y_input );// LPF : Backward Difference
-        Mz_dis = 1.0 / (1.0 + G_WOB * dt) * ( Mz_dis_pre + G_WOB * dt * Mz_ref - G_WOB * Jz * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+        ddphi_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddphi_dis_pre + G_WOB * dt * ddphi_ref - G_WOB * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+        // Mz_dis = 1.0 / (1.0 + G_WOB * dt) * ( Mz_dis_pre + G_WOB * dt * Mz_ref - G_WOB * Jz * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+
+        Fx_dis = - Fx_dis;// Apply + - sign direction to the sign direction of slip ratio observer
+        Fy_dis = - Fy_dis;
+        Mz_dis = - Jz * ddphi_dis;
 
           // * Save previous values
           // WOB_x_input_pre = WOB_x_input;
@@ -1734,7 +1752,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
           Fx_dis_pre = Fx_dis;
           Fy_dis_pre = Fy_dis;
-          Mz_dis_pre = Mz_dis;
+          ddphi_dis_pre = ddphi_dis;
+          // Mz_dis_pre = Mz_dis;
           // * Save previous values
         #endif
 
@@ -1797,6 +1816,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         cnt2_pre = cnt2;
         cnt3_pre = cnt3;
         cnt4_pre = cnt4;
+        // * Save previous values
+
+        // * Save previous values
+        Acc_x_correct_pre = Acc_x_correct;
+        Acc_y_correct_pre = Acc_y_correct;
+        d_yawrate_pre     = d_yawrate;
+
+        yaw_rate_pre2       = yaw_rate_pre;
+        yaw_rate_pre        = yaw_rate;
+        yaw_rate_notch_pre2 = yaw_rate_notch_pre;
+        yaw_rate_notch_pre  = yaw_rate_notch;
         // * Save previous values
 
         // if(loop % 1000 == 0){
@@ -1973,6 +2003,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           d_lambda_2_hat_acc_SRAM[i_save] = d_lambda_2_hat_acc;
           d_lambda_3_hat_acc_SRAM[i_save] = d_lambda_3_hat_acc;
           d_lambda_4_hat_acc_SRAM[i_save] = d_lambda_4_hat_acc;
+
+          Fx_dis_SRAM[i_save] = Fx_dis;
+          Fy_dis_SRAM[i_save] = Fy_dis;
+          Mz_dis_SRAM[i_save] = Mz_dis;
 
           i_save++;
         }
@@ -2175,6 +2209,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", d_lambda_2_hat_acc_SRAM[i_output]);
           printf("%f, ", d_lambda_3_hat_acc_SRAM[i_output]);
           printf("%f, ", d_lambda_4_hat_acc_SRAM[i_output]);
+          
+          printf("%f, ", Fx_dis_SRAM[i_output]);
+          printf("%f, ", Fy_dis_SRAM[i_output]);
+          printf("%f, ", Mz_dis_SRAM[i_output]);
 
           printf("\r\n");
         }
