@@ -620,7 +620,7 @@ float Acc_x_correct_pre = 0.0;// Space(Absolute) coordinate system
 float Acc_y_correct_pre = 0.0;
 float Acc_z_correct_pre = 0.0;
 
-#define G_LPF_acc  400.0f // [rad/sec]
+#define G_LPF_acc  300.0f // [rad/sec]
 #define G_LPF_gyro 50.0f //150.0f // [rad/sec]
 #define G_HPF_acc  100.0f // [rad/sec]
 
@@ -635,7 +635,8 @@ float Acc_z_LPF_pre = 0.0;
 
 
 // * Slip Ratio
-#define epsilon 0.1f//0.01f//0.001f // Prevent division by 0
+#define epsilon 0.05f//0.01f//0.001f // Prevent division by 0
+#define epsilon_acc 0.1f//0.01f//0.001f // Prevent division by 0
 
 float lambda_1_hat = 0.0;// Estimated slip ratio when just encoder is utilized
 float lambda_2_hat = 0.0;
@@ -728,8 +729,8 @@ float ddphi_dis_pre = 0.0;
 
 
 // * Save variables in SRAM
-// #define N_SRAM 1100 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-#define N_SRAM 600
+#define N_SRAM 1300 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+// #define N_SRAM 1100
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -857,6 +858,16 @@ float d_lambda_4_hat_acc_SRAM[N_SRAM] = {};
 float Fx_dis_SRAM[N_SRAM] = {};
 float Fy_dis_SRAM[N_SRAM] = {};
 float Mz_dis_SRAM[N_SRAM] = {};
+
+float v1_hat_SRAM[N_SRAM] = {};
+float v2_hat_SRAM[N_SRAM] = {};
+float v3_hat_SRAM[N_SRAM] = {};
+float v4_hat_SRAM[N_SRAM] = {};
+
+float v1_hat_acc_SRAM[N_SRAM] = {};
+float v2_hat_acc_SRAM[N_SRAM] = {};
+float v3_hat_acc_SRAM[N_SRAM] = {};
+float v4_hat_acc_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 // * Command
@@ -1031,7 +1042,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           ddtheta4_res_pre = ddtheta4_res;
           // * Save previous values
 
-        // * Slip Ratio Observer
+        // * Slip Ratio Observer : SRO, SRE
         delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );// 1.0112 * fd1,2,3,4
 
         // dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - delta_dv - ( Fx_dis + Fy_dis ) / Mass + ( L + W ) / Jz * Mz_dis;// Just Encoder
@@ -1088,137 +1099,157 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //     // printf("3 \r\n");
         // }
 
-        if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
-          if( Rw * fabsf(dtheta1_res) > fabsf(v1_hat) ){// Acceleration
-            d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
-            lambda_1_hat  += d_lambda_1_hat * dt;
-            v1_hat = ( 1.0 - lambda_1_hat ) * Rw * dtheta1_res;
-          }else{// Deceleration
-            d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
-            lambda_1_hat  += d_lambda_1_hat * dt;
-            v1_hat = Rw * dtheta1_res / ( 1.0 + lambda_1_hat );
-          }
+        // if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
+        //   if( Rw * fabsf(dtheta1_res) > fabsf(v1_hat) ){// Acceleration
+        //     d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+        //     lambda_1_hat  += d_lambda_1_hat * dt;
+        //     v1_hat = ( 1.0 - lambda_1_hat ) * Rw * dtheta1_res;
+        //   }else{// Deceleration
+        //     d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
+        //     lambda_1_hat  += d_lambda_1_hat * dt;
+        //     v1_hat = Rw * dtheta1_res / ( 1.0 + lambda_1_hat );
+        //   }
+        // }else{
+        //   if( dtheta1_res != 0.0 ){
+        //     lambda_1_hat = ( Rw * dtheta1_res - v1_hat ) / epsilon;
+        //   }else{
+        //     d_lambda_1_hat = 0.0;
+        //     lambda_1_hat = 0.0;
+        //   }        
+        // }
+
+        if( dtheta1_res > epsilon / Rw || dtheta1_res < - epsilon / Rw ){
+          // ! Acceleration Definition
+          d_lambda_1_hat = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat ) - dv_1 / ( Rw * dtheta1_res );
+          // ? Deceleration Definition
+          // d_lambda_1_hat = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat ) - ( 1.0 + lambda_1_hat )*( 1.0 + lambda_1_hat ) * dv_1 / ( Rw * dtheta1_res );
         }else{
-          d_lambda_1_hat = 0.0;
-          lambda_1_hat = 0.0;
+          if( dtheta1_res != 0.0 ){
+            lambda_1_hat = ( Rw * dtheta1_res - v1_hat ) / epsilon;
+          }else{
+            d_lambda_1_hat = 0.0;
+            lambda_1_hat = 0.0;
+          }    
         }
 
-        if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-          if( Rw * fabsf(dtheta2_res) > fabsf(v2_hat) ){// Acceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
-            lambda_2_hat  += d_lambda_2_hat * dt;
-            v2_hat = ( 1.0 - lambda_2_hat ) * Rw * dtheta2_res;
-          }else{// Deceleration
-            d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
-            lambda_2_hat  += d_lambda_2_hat * dt;
-            v2_hat = Rw * dtheta2_res / ( 1.0 + lambda_2_hat );
-          }
+        if( dtheta2_res > epsilon / Rw || dtheta2_res < - epsilon / Rw ){
+          // ! Acceleration Definition
+          d_lambda_2_hat = ddtheta2_ref / dtheta2_res * ( 1.0 - lambda_2_hat ) - dv_2 / ( Rw * dtheta2_res );
+          // ? Deceleration Definition
+          // d_lambda_2_hat = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat ) - ( 1.0 + lambda_2_hat )*( 1.0 + lambda_2_hat ) * dv_2 / ( Rw * dtheta2_res );
         }else{
-          d_lambda_2_hat = 0.0;
-          lambda_2_hat = 0.0;
+          if( dtheta2_res != 0.0 ){
+            lambda_2_hat = ( Rw * dtheta2_res - v2_hat ) / epsilon;
+          }else{
+            d_lambda_2_hat = 0.0;
+            lambda_2_hat = 0.0;
+          }    
         }
 
-        if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-          if( Rw * fabsf(dtheta3_res) > fabsf(v3_hat) ){// Acceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
-            lambda_3_hat  += d_lambda_3_hat * dt;
-            v3_hat = ( 1.0 - lambda_3_hat ) * Rw * dtheta3_res;
-          }else{// Deceleration
-            d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
-            lambda_3_hat  += d_lambda_3_hat * dt;
-            v3_hat = Rw * dtheta3_res / ( 1.0 + lambda_3_hat );
-          }
+        if( dtheta3_res > epsilon / Rw || dtheta3_res < - epsilon / Rw ){
+          // ! Acceleration Definition
+          d_lambda_3_hat = ddtheta3_ref / dtheta3_res * ( 1.0 - lambda_3_hat ) - dv_3 / ( Rw * dtheta3_res );
+          // ? Deceleration Definition
+          // d_lambda_3_hat = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat ) - ( 1.0 + lambda_3_hat )*( 1.0 + lambda_3_hat ) * dv_3 / ( Rw * dtheta3_res );
         }else{
-          d_lambda_3_hat = 0.0;
-          lambda_3_hat = 0.0;
+          if( dtheta3_res != 0.0 ){
+            lambda_3_hat = ( Rw * dtheta3_res - v3_hat ) / epsilon;
+          }else{
+            d_lambda_3_hat = 0.0;
+            lambda_3_hat = 0.0;
+          }    
         }
 
-        if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-          if( Rw * fabsf(dtheta4_res) > fabsf(v4_hat) ){// Acceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
-            lambda_4_hat  += d_lambda_4_hat * dt;
-            v4_hat = ( 1.0 - lambda_4_hat ) * Rw * dtheta4_res;
-          }else{// Deceleration
-            d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
-            lambda_4_hat  += d_lambda_4_hat * dt;
-            v4_hat = Rw * dtheta4_res / ( 1.0 + lambda_4_hat );
-          }
+        if( dtheta4_res > epsilon / Rw || dtheta4_res < - epsilon / Rw ){
+          // ! Acceleration Definition
+          d_lambda_4_hat = ddtheta4_ref / dtheta4_res * ( 1.0 - lambda_4_hat ) - dv_4 / ( Rw * dtheta4_res );
+          // ? Deceleration Definition
+          // d_lambda_4_hat = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat ) - ( 1.0 + lambda_4_hat )*( 1.0 + lambda_4_hat ) * dv_4 / ( Rw * dtheta4_res );
         }else{
-          d_lambda_4_hat = 0.0;
-          lambda_4_hat = 0.0;
+          if( dtheta4_res != 0.0 ){
+            lambda_4_hat = ( Rw * dtheta4_res - v4_hat ) / epsilon;
+          }else{
+            d_lambda_4_hat = 0.0;
+            lambda_4_hat = 0.0;
+          }    
         }
 
-        if( dtheta1_res > epsilon || dtheta1_res < - epsilon ){
-          if( Rw * fabsf(dtheta1_res) > fabsf(v1_hat_acc) ){// Acceleration
-            d_lambda_1_hat_acc = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat_acc ) - dv_1_acc / ( Rw * dtheta1_res );
-            lambda_1_hat_acc  += d_lambda_1_hat_acc * dt;
-            v1_hat_acc = ( 1.0 - lambda_1_hat_acc ) * Rw * dtheta1_res;
-          }else{// Deceleration
-            d_lambda_1_hat_acc = ddtheta1_ref / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
-            lambda_1_hat_acc  += d_lambda_1_hat_acc * dt;
-            v1_hat_acc = Rw * dtheta1_res / ( 1.0 + lambda_1_hat_acc );
-          }
+        if( dtheta1_res > epsilon_acc / Rw || dtheta1_res < - epsilon_acc / Rw ){
+          // ! Acceleration Definition
+          d_lambda_1_hat_acc = ddtheta1_ref / dtheta1_res * ( 1.0 - lambda_1_hat_acc ) - dv_1_acc / ( Rw * dtheta1_res );
+          // ? Deceleration Definition
+          // d_lambda_1_hat_acc = ddtheta1_res / dtheta1_res * ( 1.0 + lambda_1_hat_acc ) - ( 1.0 + lambda_1_hat_acc )*( 1.0 + lambda_1_hat_acc ) * dv_1_acc / ( Rw * dtheta1_res );
         }else{
-          d_lambda_1_hat_acc = 0.0;
-          lambda_1_hat_acc = 0.0;
+          if( dtheta1_res != 0.0 ){
+            lambda_1_hat_acc = ( Rw * dtheta1_res - v1_hat_acc ) / epsilon_acc;
+          }else{
+            d_lambda_1_hat_acc = 0.0;
+            lambda_1_hat_acc = 0.0;
+          }    
         }
 
-        if( dtheta2_res > epsilon || dtheta2_res < - epsilon ){
-          if( Rw * fabsf(dtheta2_res) > fabsf(v2_hat_acc) ){// Acceleration
-            d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 - lambda_2_hat_acc ) - dv_2_acc / ( Rw * dtheta2_res );
-            lambda_2_hat_acc  += d_lambda_2_hat_acc * dt;
-            v2_hat_acc = ( 1.0 - lambda_2_hat_acc ) * Rw * dtheta2_res;
-          }else{// Deceleration
-            d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat_acc ) - ( 1.0 + lambda_2_hat_acc )*( 1.0 + lambda_2_hat_acc ) * dv_2_acc / ( Rw * dtheta2_res );
-            lambda_2_hat_acc  += d_lambda_2_hat_acc * dt;
-            v2_hat_acc = Rw * dtheta2_res / ( 1.0 + lambda_2_hat_acc );
-          }
+        if( dtheta2_res > epsilon_acc / Rw || dtheta2_res < - epsilon_acc / Rw ){
+          // ! Acceleration Definition
+          d_lambda_2_hat_acc = ddtheta2_ref / dtheta2_res * ( 1.0 - lambda_2_hat_acc ) - dv_2_acc / ( Rw * dtheta2_res );
+          // ? Deceleration Definition
+          // d_lambda_2_hat_acc = ddtheta2_res / dtheta2_res * ( 1.0 + lambda_2_hat_acc ) - ( 1.0 + lambda_2_hat_acc )*( 1.0 + lambda_2_hat_acc ) * dv_2_acc / ( Rw * dtheta2_res );
         }else{
-          d_lambda_2_hat_acc = 0.0;
-          lambda_2_hat_acc = 0.0;
+          if( dtheta2_res != 0.0 ){
+            lambda_2_hat_acc = ( Rw * dtheta2_res - v2_hat_acc ) / epsilon_acc;
+          }else{
+            d_lambda_2_hat_acc = 0.0;
+            lambda_2_hat_acc = 0.0;
+          }    
         }
 
-        if( dtheta3_res > epsilon || dtheta3_res < - epsilon ){
-          if( Rw * fabsf(dtheta3_res) > fabsf(v3_hat_acc) ){// Acceleration
-            d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 - lambda_3_hat_acc ) - dv_3_acc / ( Rw * dtheta3_res );
-            lambda_3_hat_acc  += d_lambda_3_hat_acc * dt;
-            v3_hat_acc = ( 1.0 - lambda_3_hat_acc ) * Rw * dtheta3_res;
-          }else{// Deceleration
-            d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat_acc ) - ( 1.0 + lambda_3_hat_acc )*( 1.0 + lambda_3_hat_acc ) * dv_3_acc / ( Rw * dtheta3_res );
-            lambda_3_hat_acc  += d_lambda_3_hat_acc * dt;
-            v3_hat_acc = Rw * dtheta3_res / ( 1.0 + lambda_3_hat_acc );
-          }
+        if( dtheta3_res > epsilon_acc / Rw || dtheta3_res < - epsilon_acc / Rw ){
+          // ! Acceleration Definition
+          d_lambda_3_hat_acc = ddtheta3_ref / dtheta3_res * ( 1.0 - lambda_3_hat_acc ) - dv_3_acc / ( Rw * dtheta3_res );
+          // ? Deceleration Definition
+          // d_lambda_3_hat_acc = ddtheta3_res / dtheta3_res * ( 1.0 + lambda_3_hat_acc ) - ( 1.0 + lambda_3_hat_acc )*( 1.0 + lambda_3_hat_acc ) * dv_3_acc / ( Rw * dtheta3_res );
         }else{
-          d_lambda_3_hat_acc = 0.0;
-          lambda_3_hat_acc = 0.0;
+          if( dtheta3_res != 0.0 ){
+            lambda_3_hat_acc = ( Rw * dtheta3_res - v3_hat_acc ) / epsilon_acc;
+          }else{
+            d_lambda_3_hat_acc = 0.0;
+            lambda_3_hat_acc = 0.0;
+          }    
         }
 
-        if( dtheta4_res > epsilon || dtheta4_res < - epsilon ){
-          if( Rw * fabsf(dtheta4_res) > fabsf(v4_hat_acc) ){// Acceleration
-            d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 - lambda_4_hat_acc ) - dv_4_acc / ( Rw * dtheta4_res );
-            lambda_4_hat_acc  += d_lambda_4_hat_acc * dt;
-            v4_hat_acc = ( 1.0 - lambda_4_hat_acc ) * Rw * dtheta4_res;
-          }else{// Deceleration
-            d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat_acc ) - ( 1.0 + lambda_4_hat_acc )*( 1.0 + lambda_4_hat_acc ) * dv_4_acc / ( Rw * dtheta4_res );
-            lambda_4_hat_acc  += d_lambda_4_hat_acc * dt;
-            v4_hat_acc = Rw * dtheta4_res / ( 1.0 + lambda_4_hat_acc );
-          }
+        if( dtheta4_res > epsilon_acc / Rw || dtheta4_res < - epsilon_acc / Rw ){
+          // ! Acceleration Definition
+          d_lambda_4_hat_acc = ddtheta4_ref / dtheta4_res * ( 1.0 - lambda_4_hat_acc ) - dv_4_acc / ( Rw * dtheta4_res );
+          // ? Deceleration Definition
+          // d_lambda_4_hat_acc = ddtheta4_res / dtheta4_res * ( 1.0 + lambda_4_hat_acc ) - ( 1.0 + lambda_4_hat_acc )*( 1.0 + lambda_4_hat_acc ) * dv_4_acc / ( Rw * dtheta4_res );
         }else{
-          d_lambda_4_hat_acc = 0.0;
-          lambda_4_hat_acc = 0.0;
+          if( dtheta4_res != 0.0 ){
+            lambda_4_hat_acc = ( Rw * dtheta4_res - v4_hat_acc ) / epsilon_acc;
+          }else{
+            d_lambda_4_hat_acc = 0.0;
+            lambda_4_hat_acc = 0.0;
+          }    
         }
 
-        // lambda_1_hat     += d_lambda_1_hat * dt;
-        // lambda_2_hat     += d_lambda_2_hat * dt;
-        // lambda_3_hat     += d_lambda_3_hat * dt;
-        // lambda_4_hat     += d_lambda_4_hat * dt;
+        lambda_1_hat     += d_lambda_1_hat * dt;
+        lambda_2_hat     += d_lambda_2_hat * dt;
+        lambda_3_hat     += d_lambda_3_hat * dt;
+        lambda_4_hat     += d_lambda_4_hat * dt;
 
-        // lambda_1_hat_acc += d_lambda_1_hat_acc * dt;
-        // lambda_2_hat_acc += d_lambda_2_hat_acc * dt;
-        // lambda_3_hat_acc += d_lambda_3_hat_acc * dt;
-        // lambda_4_hat_acc += d_lambda_4_hat_acc * dt;
+        lambda_1_hat_acc += d_lambda_1_hat_acc * dt;
+        lambda_2_hat_acc += d_lambda_2_hat_acc * dt;
+        lambda_3_hat_acc += d_lambda_3_hat_acc * dt;
+        lambda_4_hat_acc += d_lambda_4_hat_acc * dt;
 
-        // * Slip Ratio Observer
+        v1_hat = Rw * dtheta1_res / ( 1.0 + lambda_1_hat );
+        v2_hat = Rw * dtheta2_res / ( 1.0 + lambda_2_hat );
+        v3_hat = Rw * dtheta3_res / ( 1.0 + lambda_3_hat );
+        v4_hat = Rw * dtheta4_res / ( 1.0 + lambda_4_hat );
+
+        v1_hat_acc = Rw * dtheta1_res / ( 1.0 + lambda_1_hat_acc );
+        v2_hat_acc = Rw * dtheta2_res / ( 1.0 + lambda_2_hat_acc );
+        v3_hat_acc = Rw * dtheta3_res / ( 1.0 + lambda_3_hat_acc );
+        v4_hat_acc = Rw * dtheta4_res / ( 1.0 + lambda_4_hat_acc );
+        // * Slip Ratio Observer : SRO, SRE
 
         // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
 
@@ -1245,15 +1276,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        if( t < t_experiment -1.0 ){
-          // vx_cmd = 0.5;
-          vy_cmd = 0.3;
-          // dphi_cmd = 1.0;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if( t < t_experiment -3.0 ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = 0.5;
+        //   // dphi_cmd = 1.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1291,7 +1322,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.5;// Period T is 2pi / omega
         // r     = 0.8;
 
-        // if(t < t_experiment){
+        // if(t < t_experiment -3.0){
         //   vx_cmd   = - r * omega * sin(omega * t);
         //   vy_cmd   =   r * omega * cos(omega * t);
         //   dphi_cmd = 0.0;
@@ -1301,7 +1332,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.5;// Period T is 2pi / omega
         // r     = 0.8;
         
-        // if(t < t_experiment){
+        // if(t < t_experiment -3.0){
         //   vx_cmd   = - r * omega;
         //   vy_cmd   = 0.0;
         //   dphi_cmd = omega;
@@ -1314,18 +1345,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // r     = 0.45;
 
         // if( t < 3.0 ){
-        //   omega = 0.5;
+        //   omega = 0.1;
         // }else if( t < 6.0 ){
-        //   omega = 0.6;
+        //   omega = 0.5;
         // }else if( t < 9.0 ){
-        //   omega = 0.3;
+        //   omega = 0.1;
         // }else if( t < 12.0 ){
-        //   omega = 0.6;
+        //   omega = 0.5;
         // }else{
         //   omega = 0.0;
         // }
 
-        // if(t < t_experiment - 1.0){
+        // if( t < 3.0 ){
+        //   r = 0.2;
+        // }else if( t < 6.0 ){
+        //   r = 0.75;
+        // }else if( t < 9.0 ){
+        //   r = 0.1;
+        // }else if( t < 12.0 ){
+        //   r = 0.75;
+        // }else{
+        //   r = 0.0;
+        // }
+
+        // if(t < t_experiment - 3.0){
         //   vx_cmd   = 0.0;
         //   vy_cmd   = r * omega;
         //   dphi_cmd = omega;
@@ -1339,7 +1382,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.3;// Period T is 2pi / omega
         // A = 0.8;
         
-        // if(t < t_experiment){
+        // if(t < t_experiment -3.0){
         //   vx_cmd   = omega;
         //   vy_cmd   = A * omega * cos(omega * t);
         //   dphi_cmd = 0.0;
@@ -1350,11 +1393,50 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.2;// Period T is 2pi / omega
         // A = 0.6;
 
-        // if(t < t_experiment){
+        // if(t < t_experiment -3.0){
         //   vx_cmd   = omega * sin(omega*t + pi / 4.0) - A*omega*cos(omega*t)*cos(omega*t + pi / 4.0);
         //   vy_cmd   = omega * cos(omega*t + pi / 4.0) + A*omega*cos(omega*t)*sin(omega*t + pi / 4.0);
         //   dphi_cmd = - pi / 4.0 * sin(omega*t);
         // }
+
+        // ! --6-- : Diagonal movement
+
+        // if( t < t_experiment - 3.0 ){
+        //   vx_cmd = 0.2;
+        //   vy_cmd = vx_cmd;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        // }
+
+        // ! --7-- : Acceleration & rotation movement
+        
+        if( t < t_experiment - 3.0 ){
+          if( t < 3.0 ){
+            omega = 0.0;
+            r     = 0.0;
+          }else if( t < t_experiment ){
+            omega = 0.35;
+            r     = 0.1 * (t - 3.0);
+          }
+        }
+
+        if(t < 3.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.2;
+          dphi_cmd = 0.0;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.2 + r * omega;
+          dphi_cmd = omega;
+        }
+
+        if( t > t_experiment - 3.0 ){
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
+
         // * Command
 
         #ifdef Enable_Driving_Force_Control
@@ -2008,6 +2090,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           Fy_dis_SRAM[i_save] = Fy_dis;
           Mz_dis_SRAM[i_save] = Mz_dis;
 
+          v1_hat_SRAM[i_save] = v1_hat;
+          v2_hat_SRAM[i_save] = v2_hat;
+          v3_hat_SRAM[i_save] = v3_hat;
+          v4_hat_SRAM[i_save] = v4_hat;
+
+          v1_hat_acc_SRAM[i_save] = v1_hat_acc;
+          v2_hat_acc_SRAM[i_save] = v2_hat_acc;
+          v3_hat_acc_SRAM[i_save] = v3_hat_acc;
+          v4_hat_acc_SRAM[i_save] = v4_hat_acc;
+
           i_save++;
         }
 
@@ -2213,6 +2305,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Fx_dis_SRAM[i_output]);
           printf("%f, ", Fy_dis_SRAM[i_output]);
           printf("%f, ", Mz_dis_SRAM[i_output]);
+
+          printf("%f, ", v1_hat_SRAM[i_output]);
+          printf("%f, ", v2_hat_SRAM[i_output]);
+          printf("%f, ", v3_hat_SRAM[i_output]);
+          printf("%f, ", v4_hat_SRAM[i_output]);
+
+          printf("%f, ", v1_hat_acc_SRAM[i_output]);
+          printf("%f, ", v2_hat_acc_SRAM[i_output]);
+          printf("%f, ", v3_hat_acc_SRAM[i_output]);
+          printf("%f, ", v4_hat_acc_SRAM[i_output]);
 
           printf("\r\n");
         }
