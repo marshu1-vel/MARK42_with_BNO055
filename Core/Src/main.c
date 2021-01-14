@@ -7,9 +7,9 @@
 // #define Enable_WOB_FB
 #define Disable_WOB_FB
 // #define Enable_PD_controller_av
-#define Enable_Vehicle_Velocity_control
+// #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -728,8 +728,15 @@ float ddphi_dis_pre = 0.0;
 // * WOB
 
 
+// * YMO ( Yaw Moment Observer )
+#define G_YMO 50.0f // [rad/sec]
+float M_YMO = 0.0;
+float M_YMO_pre = 0.0;
+// * YMO ( Yaw Moment Observer )
+
+
 // * Save variables in SRAM
-#define N_SRAM 1300 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 // #define N_SRAM 1100
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
@@ -858,6 +865,8 @@ float d_lambda_4_hat_acc_SRAM[N_SRAM] = {};
 float Fx_dis_SRAM[N_SRAM] = {};
 float Fy_dis_SRAM[N_SRAM] = {};
 float Mz_dis_SRAM[N_SRAM] = {};
+
+float M_YMO_SRAM[N_SRAM] = {};
 
 float v1_hat_SRAM[N_SRAM] = {};
 float v2_hat_SRAM[N_SRAM] = {};
@@ -1344,17 +1353,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.3;
         // r     = 0.45;
 
-        // if( t < 3.0 ){
-        //   omega = 0.1;
-        // }else if( t < 6.0 ){
-        //   omega = 0.5;
-        // }else if( t < 9.0 ){
-        //   omega = 0.1;
-        // }else if( t < 12.0 ){
-        //   omega = 0.5;
-        // }else{
-        //   omega = 0.0;
-        // }
+        if( t < 3.0 ){
+          omega = 0.1;
+        }else if( t < 6.0 ){
+          omega = 0.5;
+        }else if( t < 9.0 ){
+          omega = 0.1;
+        }else if( t < 12.0 ){
+          omega = 0.5;
+        }else{
+          omega = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   r = 0.2;
@@ -1368,15 +1377,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   r = 0.0;
         // }
 
-        // if(t < t_experiment - 3.0){
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = r * omega;
-        //   dphi_cmd = omega;
-        // }else{
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if(t < t_experiment - 3.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1411,31 +1420,31 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // ! --7-- : Acceleration & rotation movement
         
-        if( t < t_experiment - 3.0 ){
-          if( t < 3.0 ){
-            omega = 0.0;
-            r     = 0.0;
-          }else if( t < t_experiment ){
-            omega = 0.35;
-            r     = 0.1 * (t - 3.0);
-          }
-        }
+        // if( t < t_experiment - 3.0 ){
+        //   if( t < 3.0 ){
+        //     omega = 0.0;
+        //     r     = 0.0;
+        //   }else if( t < t_experiment ){
+        //     omega = 0.35;
+        //     r     = 0.1 * (t - 3.0);
+        //   }
+        // }
 
-        if(t < 3.0){
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.2;
-          dphi_cmd = 0.0;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.2 + r * omega;
-          dphi_cmd = omega;
-        }
+        // if(t < 3.0){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.2;
+        //   dphi_cmd = 0.0;
+        // }else{
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.2 + r * omega;
+        //   dphi_cmd = omega;
+        // }
 
-        if( t > t_experiment - 3.0 ){
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if( t > t_experiment - 3.0 ){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // * Command
 
@@ -1839,6 +1848,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           // * Save previous values
         #endif
 
+        // * YMO ( Yaw Moment Observer )
+        // M_YMO = 1.0 / (1.0 + G_YMO * dt) * ( M_YMO_pre + G_YMO * dt * YMO_input_pre );// LPF : Backward Difference
+        M_YMO = 1.0 / (1.0 + G_YMO * dt) * ( M_YMO_pre + G_YMO * ( yaw_rate - yaw_rate_pre ) - G_YMO * dt * Mz_hat );// LPF + Pseudo Derivative : Backward Difference
+
+          // * Save previous values
+          M_YMO_pre     = M_YMO;
+          // * Save previous values
+        // * YMO ( Yaw Moment Observer )
+
         ia1_ref = i1_ref + i1_comp;
         ia2_ref = i2_ref + i2_comp;
         ia3_ref = i3_ref + i3_comp;
@@ -2090,6 +2108,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           Fy_dis_SRAM[i_save] = Fy_dis;
           Mz_dis_SRAM[i_save] = Mz_dis;
 
+          M_YMO_SRAM[i_save] = M_YMO;
+
           v1_hat_SRAM[i_save] = v1_hat;
           v2_hat_SRAM[i_save] = v2_hat;
           v3_hat_SRAM[i_save] = v3_hat;
@@ -2305,6 +2325,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Fx_dis_SRAM[i_output]);
           printf("%f, ", Fy_dis_SRAM[i_output]);
           printf("%f, ", Mz_dis_SRAM[i_output]);
+          
+          printf("%f, ", M_YMO_SRAM[i_output]);
 
           printf("%f, ", v1_hat_SRAM[i_output]);
           printf("%f, ", v2_hat_SRAM[i_output]);
