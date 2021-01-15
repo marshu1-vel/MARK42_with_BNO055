@@ -1285,15 +1285,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        // if( t < t_experiment -3.0 ){
-        //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
-        //   // dphi_cmd = 1.0;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if( t < t_experiment -3.0 ){
+          // vx_cmd = 0.5;
+          vy_cmd = 0.5;
+          // dphi_cmd = 1.0;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
