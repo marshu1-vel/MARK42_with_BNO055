@@ -9,10 +9,13 @@
 // #define Enable_PD_controller_av
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
-#define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Control_Jointspace_Part // This part is common to Driving Force Control and Driving Force Distribution Control
+// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Distribution_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
+// #define Enable_Slip_Ratio_Observer
 //! ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
   ******************************************************************************
@@ -479,7 +482,7 @@ float ddphi_ref = 0.0;
 
 #define Kp_df_x 100.0f//0.1f 0.5 10.0 50.0
 #define Kp_df_y 100.0f//0.1f 0.5
-#define Kp_df_phi 10000.0f//0.1f 5.0 100.0(1115-36)
+#define Kp_df_phi 900.0f//10000.0f//0.1f 5.0 100.0(1115-36) : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
 
 #define Kp_df 0.005f//0.005f//5000.0f//1.2f//0.2f
 #define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
@@ -491,6 +494,11 @@ float fd1_ref = 0.0;
 float fd2_ref = 0.0;
 float fd3_ref = 0.0;
 float fd4_ref = 0.0;
+
+float fd1_ref_normal = 0.0;
+float fd2_ref_normal = 0.0;
+float fd3_ref_normal = 0.0;
+float fd4_ref_normal = 0.0;
 
 float Ki_df_integral1 = 0.0;
 float Ki_df_integral2 = 0.0;
@@ -576,6 +584,31 @@ float tau_fric4 = 0.0;
 // * DFOB
 
 
+// * For Driving Force Distribution Control
+float w1 = 0.0;
+float w2 = 0.0;
+float w3 = 0.0;
+float w4 = 0.0;
+
+#define epsilon 0.01f//0.1f//0.01f// 0.001f
+
+float alpha_1 = 0.0;
+float alpha_2 = 0.0;
+float alpha_3 = 0.0;
+float alpha_4 = 0.0;
+
+float v1_x = 0.0;
+float v2_x = 0.0;
+float v3_x = 0.0;
+float v4_x = 0.0;
+
+float v1_y = 0.0;
+float v2_y = 0.0;
+float v3_y = 0.0;
+float v4_y = 0.0;
+// * For Driving Force Distribution Control
+
+
 // * IMU
 bno055_vector_t Euler;
 bno055_vector_t Gyro;
@@ -635,6 +668,7 @@ float Acc_z_LPF_pre = 0.0;
 
 
 // * Slip Ratio
+#ifdef Enable_Slip_Ratio_Observer
 #define epsilon 0.05f//0.01f//0.001f // Prevent division by 0
 #define epsilon_acc 0.1f//0.01f//0.001f // Prevent division by 0
 
@@ -696,6 +730,7 @@ float v1_hat_acc = 0.0;
 float v2_hat_acc = 0.0;
 float v3_hat_acc = 0.0;
 float v4_hat_acc = 0.0;
+#endif
 // * Slip Ratio
 
 // * WOB
@@ -781,9 +816,16 @@ uint16_t PWM2_SRAM[N_SRAM] = {};
 uint16_t PWM3_SRAM[N_SRAM] = {};
 uint16_t PWM4_SRAM[N_SRAM] = {};
 
+float fd1_ref_normal_SRAM[N_SRAM] = {};// Added : as of 2021/01/16
 float fd1_ref_SRAM[N_SRAM] = {};
+
+float fd2_ref_normal_SRAM[N_SRAM] = {};
 float fd2_ref_SRAM[N_SRAM] = {};
+
+float fd3_ref_normal_SRAM[N_SRAM] = {};
 float fd3_ref_SRAM[N_SRAM] = {};
+
+float fd4_ref_normal_SRAM[N_SRAM] = {};
 float fd4_ref_SRAM[N_SRAM] = {};
 
 float Ki_df_integral1_SRAM[N_SRAM] = {};
@@ -842,6 +884,7 @@ float Acc_y_LPF_SRAM[N_SRAM] = {};
 // float Acc_z_LPF_SRAM[N_SRAM] = {};
 float d_yawrate_SRAM[N_SRAM] = {};
 
+#ifdef Enable_Slip_Ratio_Observer
 float lambda_1_hat_SRAM[N_SRAM] = {};
 float lambda_2_hat_SRAM[N_SRAM] = {};
 float lambda_3_hat_SRAM[N_SRAM] = {};
@@ -862,12 +905,6 @@ float d_lambda_2_hat_acc_SRAM[N_SRAM] = {};
 float d_lambda_3_hat_acc_SRAM[N_SRAM] = {};
 float d_lambda_4_hat_acc_SRAM[N_SRAM] = {};
 
-float Fx_dis_SRAM[N_SRAM] = {};
-float Fy_dis_SRAM[N_SRAM] = {};
-float Mz_dis_SRAM[N_SRAM] = {};
-
-float M_YMO_SRAM[N_SRAM] = {};
-
 float v1_hat_SRAM[N_SRAM] = {};
 float v2_hat_SRAM[N_SRAM] = {};
 float v3_hat_SRAM[N_SRAM] = {};
@@ -877,6 +914,19 @@ float v1_hat_acc_SRAM[N_SRAM] = {};
 float v2_hat_acc_SRAM[N_SRAM] = {};
 float v3_hat_acc_SRAM[N_SRAM] = {};
 float v4_hat_acc_SRAM[N_SRAM] = {};
+#endif
+
+float Fx_dis_SRAM[N_SRAM] = {};
+float Fy_dis_SRAM[N_SRAM] = {};
+float Mz_dis_SRAM[N_SRAM] = {};
+
+float M_YMO_SRAM[N_SRAM] = {};
+
+float alpha_1_SRAM[N_SRAM] = {};
+float alpha_2_SRAM[N_SRAM] = {};
+float alpha_3_SRAM[N_SRAM] = {};
+float alpha_4_SRAM[N_SRAM] = {};
+
 // * Save variables in SRAM
 
 // * Command
@@ -1052,6 +1102,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           // * Save previous values
 
         // * Slip Ratio Observer : SRO, SRE
+        #ifdef Enable_Slip_Ratio_Observer
         delta_dv = ( L + W )*( L + W ) / Jz * ( - fd_hat1 - fd_hat2 + fd_hat3 + fd_hat4 );// 1.0112 * fd1,2,3,4
 
         // dv_1 = sqrt(2.0) / Mass * ( fd_hat1 + fd_hat3 ) - delta_dv - ( Fx_dis + Fy_dis ) / Mass + ( L + W ) / Jz * Mz_dis;// Just Encoder
@@ -1258,6 +1309,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         v2_hat_acc = Rw * dtheta2_res / ( 1.0 + lambda_2_hat_acc );
         v3_hat_acc = Rw * dtheta3_res / ( 1.0 + lambda_3_hat_acc );
         v4_hat_acc = Rw * dtheta4_res / ( 1.0 + lambda_4_hat_acc );
+        #endif
         // * Slip Ratio Observer : SRO, SRE
 
         // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
@@ -1285,15 +1337,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        if( t < t_experiment -3.0 ){
-          // vx_cmd = 0.5;
-          vy_cmd = 0.5;
-          // dphi_cmd = 1.0;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if( t < t_experiment -3.0 ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = 0.5;
+        //   // dphi_cmd = 1.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1448,17 +1500,63 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        #ifdef Enable_Driving_Force_Control
-        // if(t < 25.0){
-        // vy_cmd = 0.5;// 0.4
-        // // vx_cmd = 0.3;
-        // // dphi_cmd = 5.0 / 3.0 * pi / 3.0;// [rad/sec]
-        // }else if(t >= 25.0){
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        #ifdef Enable_Driving_Force_Distribution_Control
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
 
+        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
+        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
+        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
+
+        v1_x = vx_res - L * yaw_rate;
+        v2_x = vx_res + L * yaw_rate;
+        v3_x = vx_res + L * yaw_rate;
+        v4_x = vx_res - L * yaw_rate;
+
+        v1_y = vy_res - W * yaw_rate;
+        v2_y = vy_res - W * yaw_rate;
+        v3_y = vy_res + W * yaw_rate;
+        v4_y = vy_res + W * yaw_rate;
+
+        if( v1_x < epsilon && v1_x > - epsilon ) v1_x = epsilon;// fabsf( v1_x ) * epsilon;
+        if( v2_x < epsilon && v2_x > - epsilon ) v2_x = epsilon;// fabsf( v2_x ) * epsilon;
+        if( v3_x < epsilon && v3_x > - epsilon ) v3_x = epsilon;// fabsf( v3_x ) * epsilon;
+        if( v4_x < epsilon && v4_x > - epsilon ) v4_x = epsilon;// fabsf( v4_x ) * epsilon;
+
+        alpha_1 = atanf( v1_y / v1_x );
+        alpha_2 = atanf( v2_y / v2_x );
+        alpha_3 = atanf( v3_y / v3_x );
+        alpha_4 = atanf( v4_y / v4_x );
+
+        w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
+        w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
+        w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
+        w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
+
+        // w1 = 0.5;
+        // w2 = 0.5;
+        // w3 = 0.5;
+        // w4 = 0.5;
+
+        // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
+        fd1_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        fd2_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        fd3_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        fd4_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! For comparing fd before distributing process : as of 2021/01/16
+
+        // fd1_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * fx_ref + ( w2 + w3 ) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );
+        // fd2_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * fx_ref + ( w1 + w4 ) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );
+        // fd3_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * fx_ref + ( w1 + w4 ) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
+        // fd4_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * fx_ref + ( w2 + w3 ) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
+
+        fd1_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * fx_ref + ( w2 + w3 ) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W !! Check!!
+        fd2_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * fx_ref + ( w1 + w4 ) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );
+        fd3_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * fx_ref + ( w1 + w4 ) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
+        fd4_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * fx_ref + ( w2 + w3 ) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
+        #endif
+
+        #ifdef Enable_Driving_Force_Control
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
         ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
@@ -1468,11 +1566,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
-        fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - ( L + W ) * Mz_ref );// Cancel Rw term
-        fd2_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
-        fd3_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + ( L + W ) * Mz_ref );
-        fd4_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + ( L + W ) * Mz_ref );
+        fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        fd2_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        fd3_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        fd4_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );
+        #endif
 
+        #ifdef Enable_Driving_Force_Control_Jointspace_Part
         // * I
         // Ki_df_integral1 += Ki_df * dt * ( fd1_ref - fd_hat1 );
         // Ki_df_integral2 += Ki_df * dt * ( fd2_ref - fd_hat2 );
@@ -1650,10 +1750,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         ddtheta4_ref = PD_controller4_av;
         #endif
 
-        // #ifdef angular_velocity_control
-        // #endif
 
-        #ifdef Enable_Driving_Force_Control
+        #ifdef Enable_Driving_Force_Control_Jointspace_Part
+        // #ifdef Enable_Driving_Force_Control
         ddtheta1_ref = Kp_av_df * (dtheta1_cmd - dtheta1_res);
         ddtheta2_ref = Kp_av_df * (dtheta2_cmd - dtheta2_res);
         ddtheta3_ref = Kp_av_df * (dtheta3_cmd - dtheta3_res);
@@ -1990,6 +2089,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // printf("%.2f,   ", Gyro.z);
         // printf("%.2f, %.2f, %.2f,   ", Acc.x,        Acc.y,        Acc.z);
 
+        // printf("%f,   ", alpha_1);
+        // printf("%f,   ", w1);
+        // printf("%f,   ", w2);
+        // printf("%f,   ", w3);
+        // printf("%f,   ", w4);
+
         // printf("\r\n");
         // }
 
@@ -2036,9 +2141,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           PWM3_SRAM[i_save] = PWM3;
           PWM4_SRAM[i_save] = PWM4;
 
+          fd1_ref_normal_SRAM[i_save] = fd1_ref_normal;
           fd1_ref_SRAM[i_save] = fd1_ref;
+
+          fd2_ref_normal_SRAM[i_save] = fd2_ref_normal;
           fd2_ref_SRAM[i_save] = fd2_ref;
+
+          fd3_ref_normal_SRAM[i_save] = fd3_ref_normal;
           fd3_ref_SRAM[i_save] = fd3_ref;
+
+          fd4_ref_normal_SRAM[i_save] = fd4_ref_normal;
           fd4_ref_SRAM[i_save] = fd4_ref;
 
           Ki_df_integral1_SRAM[i_save] = Ki_df_integral1;
@@ -2084,6 +2196,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           Acc_y_LPF_SRAM[i_save] = Acc_y_LPF;
           d_yawrate_SRAM[i_save] = d_yawrate;
 
+          Fx_dis_SRAM[i_save] = Fx_dis;
+          Fy_dis_SRAM[i_save] = Fy_dis;
+          Mz_dis_SRAM[i_save] = Mz_dis;
+
+          M_YMO_SRAM[i_save] = M_YMO;
+
+          alpha_1_SRAM[i_save] = alpha_1;
+          alpha_2_SRAM[i_save] = alpha_2;
+          alpha_3_SRAM[i_save] = alpha_3;
+          alpha_4_SRAM[i_save] = alpha_4;
+
+          #ifdef Enable_Slip_Ratio_Observer
           lambda_1_hat_SRAM[i_save] = lambda_1_hat;
           lambda_2_hat_SRAM[i_save] = lambda_2_hat;
           lambda_3_hat_SRAM[i_save] = lambda_3_hat;
@@ -2104,12 +2228,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           d_lambda_3_hat_acc_SRAM[i_save] = d_lambda_3_hat_acc;
           d_lambda_4_hat_acc_SRAM[i_save] = d_lambda_4_hat_acc;
 
-          Fx_dis_SRAM[i_save] = Fx_dis;
-          Fy_dis_SRAM[i_save] = Fy_dis;
-          Mz_dis_SRAM[i_save] = Mz_dis;
-
-          M_YMO_SRAM[i_save] = M_YMO;
-
           v1_hat_SRAM[i_save] = v1_hat;
           v2_hat_SRAM[i_save] = v2_hat;
           v3_hat_SRAM[i_save] = v3_hat;
@@ -2119,6 +2237,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           v2_hat_acc_SRAM[i_save] = v2_hat_acc;
           v3_hat_acc_SRAM[i_save] = v3_hat_acc;
           v4_hat_acc_SRAM[i_save] = v4_hat_acc;
+          #endif
 
           i_save++;
         }
@@ -2260,9 +2379,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%d, ", PWM3_SRAM[i_output]);
           printf("%d, ", PWM4_SRAM[i_output]);
 
+          printf("%f, ", fd1_ref_normal_SRAM[i_output]);
           printf("%f, ", fd1_ref_SRAM[i_output]);
+          
+          printf("%f, ", fd2_ref_normal_SRAM[i_output]);
           printf("%f, ", fd2_ref_SRAM[i_output]);
+
+          printf("%f, ", fd3_ref_normal_SRAM[i_output]);
           printf("%f, ", fd3_ref_SRAM[i_output]);
+
+          printf("%f, ", fd4_ref_normal_SRAM[i_output]);
           printf("%f, ", fd4_ref_SRAM[i_output]);
           
           printf("%f, ", Ki_df_integral1_SRAM[i_output]);
@@ -2302,6 +2428,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Acc_y_LPF_SRAM[i_output]);
           printf("%f, ", d_yawrate_SRAM[i_output]);
 
+          printf("%f, ", Fx_dis_SRAM[i_output]);
+          printf("%f, ", Fy_dis_SRAM[i_output]);
+          printf("%f, ", Mz_dis_SRAM[i_output]);
+          
+          printf("%f, ", M_YMO_SRAM[i_output]);
+
+          printf("%f, ", alpha_1_SRAM[i_output]);
+          printf("%f, ", alpha_2_SRAM[i_output]);
+          printf("%f, ", alpha_3_SRAM[i_output]);
+          printf("%f, ", alpha_4_SRAM[i_output]);
+
+          #ifdef Enable_Slip_Ratio_Observer
           printf("%f, ", lambda_1_hat_SRAM[i_output]);
           printf("%f, ", lambda_2_hat_SRAM[i_output]);
           printf("%f, ", lambda_3_hat_SRAM[i_output]);
@@ -2322,12 +2460,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", d_lambda_3_hat_acc_SRAM[i_output]);
           printf("%f, ", d_lambda_4_hat_acc_SRAM[i_output]);
           
-          printf("%f, ", Fx_dis_SRAM[i_output]);
-          printf("%f, ", Fy_dis_SRAM[i_output]);
-          printf("%f, ", Mz_dis_SRAM[i_output]);
-          
-          printf("%f, ", M_YMO_SRAM[i_output]);
-
           printf("%f, ", v1_hat_SRAM[i_output]);
           printf("%f, ", v2_hat_SRAM[i_output]);
           printf("%f, ", v3_hat_SRAM[i_output]);
@@ -2337,6 +2469,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", v2_hat_acc_SRAM[i_output]);
           printf("%f, ", v3_hat_acc_SRAM[i_output]);
           printf("%f, ", v4_hat_acc_SRAM[i_output]);
+          #endif
 
           printf("\r\n");
         }
