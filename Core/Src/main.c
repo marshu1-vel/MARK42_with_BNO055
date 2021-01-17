@@ -10,8 +10,8 @@
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 #define Enable_Driving_Force_Control_Jointspace_Part // This part is common to Driving Force Control and Driving Force Distribution Control
-// #define Enable_Driving_Force_Control
-#define Enable_Driving_Force_Distribution_Control
+#define Enable_Driving_Force_Control
+// #define Enable_Driving_Force_Distribution_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -771,7 +771,7 @@ float M_YMO_pre = 0.0;
 
 
 // * Save variables in SRAM
-#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 // #define N_SRAM 1100
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
@@ -1337,15 +1337,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        // if( t < t_experiment -3.0 ){
-        //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
-        //   // dphi_cmd = 1.0;
-        // }else{
-        //   vx_cmd = 0.0;
-        //   vy_cmd = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if( t < t_experiment -3.0 ){
+          // vx_cmd = 0.5;
+          vy_cmd = 0.5;
+          // dphi_cmd = 1.0;
+        }else{
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1400,23 +1400,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        omega = 0.5;// Period T is 2pi / omega
-        r     = 0.75;
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.75;
         // omega = 0.3;
         // r     = 0.45;
+        omega = 0.5;
+        r     = 0.3;// * Internal Singular Point
+        // omega = 0.5;
+        // r     = 0.6;//0.5;
 
-        if( t < 3.0 ){
-          omega = 0.1;
-        }else if( t < 6.0 ){
-          omega = 0.5;
-        }else if( t < 9.0 ){
-          omega = 0.1;
-        }else if( t < 12.0 ){
-          omega = 0.5;
-        }else{
-          omega = 0.0;
-        }
+        // if( t < 3.0 ){
+        //   omega = 0.1;
+        // }else if( t < 6.0 ){
+        //   omega = 0.5;
+        // }else if( t < 9.0 ){
+        //   omega = 0.1;
+        // }else if( t < 12.0 ){
+        //   omega = 0.5;
+        // }else{
+        //   omega = 0.0;
+        // }
 
+        // if(t < t_experiment - 3.0){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = r * omega;
+        //   dphi_cmd = omega;
+        // }else{
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
+        
         // if( t < 3.0 ){
         //   r = 0.2;
         // }else if( t < 6.0 ){
@@ -1428,16 +1442,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }else{
         //   r = 0.0;
         // }
-
-        if(t < t_experiment - 3.0){
-          vx_cmd   = 0.0;
-          vy_cmd   = r * omega;
-          dphi_cmd = omega;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1524,10 +1528,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         if( v3_x < epsilon && v3_x > - epsilon ) v3_x = epsilon;// fabsf( v3_x ) * epsilon;
         if( v4_x < epsilon && v4_x > - epsilon ) v4_x = epsilon;// fabsf( v4_x ) * epsilon;
 
-        alpha_1 = atanf( v1_y / v1_x );
-        alpha_2 = atanf( v2_y / v2_x );
-        alpha_3 = atanf( v3_y / v3_x );
-        alpha_4 = atanf( v4_y / v4_x );
+        // alpha_1 = atanf( v1_y / v1_x );
+        // alpha_2 = atanf( v2_y / v2_x );
+        // alpha_3 = atanf( v3_y / v3_x );
+        // alpha_4 = atanf( v4_y / v4_x );
+
+        alpha_1 = atan2f( v1_y , v1_x );
+        alpha_2 = atan2f( v2_y , v2_x );
+        alpha_3 = atan2f( v3_y , v3_x );
+        alpha_4 = atan2f( v4_y , v4_x );
 
         w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
         w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
@@ -1540,20 +1549,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // w4 = 0.5;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
-        fd1_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
-        fd2_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
-        fd3_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
-        fd4_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! For comparing fd before distributing process : as of 2021/01/16
+        // fd1_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        // fd2_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        // fd3_ref_normal = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        // fd4_ref_normal = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! For comparing fd before distributing process : as of 2021/01/16
+
+        fd1_ref_normal = 1.0 / ( sqrtf(2.0) * 4.0 ) * ( sqrtf(2.0) * (   fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        fd2_ref_normal = 1.0 / ( sqrtf(2.0) * 4.0 ) * ( sqrtf(2.0) * ( - fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// ! For comparing fd before distributing process : as of 2021/01/16
+        fd3_ref_normal = 1.0 / ( sqrtf(2.0) * 4.0 ) * ( sqrtf(2.0) * (   fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );// Change place of sqrt(2.0) : as of 2021/01/17
+        fd4_ref_normal = 1.0 / ( sqrtf(2.0) * 4.0 ) * ( sqrtf(2.0) * ( - fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );
 
         // fd1_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * fx_ref + ( w2 + w3 ) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );
         // fd2_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * fx_ref + ( w1 + w4 ) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );
         // fd3_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * fx_ref + ( w1 + w4 ) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
         // fd4_ref = Rw / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * fx_ref + ( w2 + w3 ) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
 
-        fd1_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * fx_ref + ( w2 + w3 ) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W !! Check!!
-        fd2_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * fx_ref + ( w1 + w4 ) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );
-        fd3_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * fx_ref + ( w1 + w4 ) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
-        fd4_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * fx_ref + ( w2 + w3 ) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
+        // fd1_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * fx_ref + ( w2 + w3 ) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W !! Check!!
+        // fd2_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * fx_ref + ( w1 + w4 ) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );// as of 2021/01/17
+        // fd3_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * fx_ref + ( w1 + w4 ) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
+        // fd4_ref = sqrt(2.0) / ( 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * fx_ref + ( w2 + w3 ) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
+
+        fd1_ref = 1.0 / ( sqrtf(2.0) * 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w3 + w4 ) * sqrtf(2.0) * fx_ref + ( w2 + w3 ) * sqrtf(2.0) * fy_ref - ( w2 + w4 ) / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W !! Check!!
+        fd2_ref = 1.0 / ( sqrtf(2.0) * 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w3 + w4 ) * sqrtf(2.0) * fx_ref + ( w1 + w4 ) * sqrtf(2.0) * fy_ref - ( w1 + w3 ) / ( L + W ) * Mz_ref );// as of 2021/01/17
+        fd3_ref = 1.0 / ( sqrtf(2.0) * 2.0 * ( w1 + w2 + w3 + w4 ) ) * (   ( w1 + w2 ) * sqrtf(2.0) * fx_ref + ( w1 + w4 ) * sqrtf(2.0) * fy_ref + ( w2 + w4 ) / ( L + W ) * Mz_ref );
+        fd4_ref = 1.0 / ( sqrtf(2.0) * 2.0 * ( w1 + w2 + w3 + w4 ) ) * ( - ( w1 + w2 ) * sqrtf(2.0) * fx_ref + ( w2 + w3 ) * sqrtf(2.0) * fy_ref + ( w1 + w3 ) / ( L + W ) * Mz_ref );
         #endif
 
         #ifdef Enable_Driving_Force_Control
@@ -1566,10 +1585,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
-        fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
-        fd2_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
-        fd3_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
-        fd4_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );
+        // fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        // fd2_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        // fd3_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        // fd4_ref = sqrt(2.0) * 1.0 / 4.0 * ( - fx_ref + fy_ref + 1.0 / ( L + W ) * Mz_ref );
+
+        // fd1_ref = 1.0 / 4.0 * ( sqrt(2.0) * (   fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        // fd2_ref = 1.0 / 4.0 * ( sqrt(2.0) * ( - fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        // fd3_ref = 1.0 / 4.0 * ( sqrt(2.0) * (   fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        // fd4_ref = 1.0 / 4.0 * ( sqrt(2.0) * ( - fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );// Change place of sqrt(2.0) : as of 2021/01/17
+
+        fd1_ref = 1.0 / ( sqrt(2.0) * 4.0 ) * ( sqrt(2.0) * (   fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
+        fd2_ref = 1.0 / ( sqrt(2.0) * 4.0 ) * ( sqrt(2.0) * ( - fx_ref + fy_ref ) - 1.0 / ( L + W ) * Mz_ref );// Add sqrt(2.0) : as of 2021/01/08
+        fd3_ref = 1.0 / ( sqrt(2.0) * 4.0 ) * ( sqrt(2.0) * (   fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );// ! Coefficient *, / of L + W : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
+        fd4_ref = 1.0 / ( sqrt(2.0) * 4.0 ) * ( sqrt(2.0) * ( - fx_ref + fy_ref ) + 1.0 / ( L + W ) * Mz_ref );// Change place of sqrt(2.0) : as of 2021/01/17
         #endif
 
         #ifdef Enable_Driving_Force_Control_Jointspace_Part
@@ -1903,15 +1932,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           tau_dfob4_pre = tau_dfob4;
           // * Save previous values
         
-        // fd_hat1 = tau_dfob1 / Rw;// [N] Element of fd's wheel rotation direction
-        // fd_hat2 = tau_dfob2 / Rw;
-        // fd_hat3 = tau_dfob3 / Rw;
-        // fd_hat4 = tau_dfob4 / Rw;
+        fd_hat1 = tau_dfob1 / Rw;// [N] Element of fd's wheel rotation direction
+        fd_hat2 = tau_dfob2 / Rw;
+        fd_hat3 = tau_dfob3 / Rw;
+        fd_hat4 = tau_dfob4 / Rw;
 
-        fd_hat1 = tau_dfob1 / Rw * sqrt(2.0);// [N] Element of fd's wheel rotation direction
-        fd_hat2 = tau_dfob2 / Rw * sqrt(2.0);
-        fd_hat3 = tau_dfob3 / Rw * sqrt(2.0);
-        fd_hat4 = tau_dfob4 / Rw * sqrt(2.0);
+        // fd_hat1 = tau_dfob1 / Rw * sqrt(2.0);// [N] Element of fd's wheel rotation direction
+        // fd_hat2 = tau_dfob2 / Rw * sqrt(2.0);
+        // fd_hat3 = tau_dfob3 / Rw * sqrt(2.0);
+        // fd_hat4 = tau_dfob4 / Rw * sqrt(2.0);
 
         fx_hat = 1.0 / Rw             * (   tau_dfob1 - tau_dfob2 + tau_dfob3 - tau_dfob4 );// Substantially, 1.0 / sqrt(2.0) * fd : as of 2021/01/08
         fy_hat = 1.0 / Rw             * (   tau_dfob1 + tau_dfob2 + tau_dfob3 + tau_dfob4 );
