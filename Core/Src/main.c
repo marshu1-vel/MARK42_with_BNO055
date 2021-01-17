@@ -10,8 +10,8 @@
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 #define Enable_Driving_Force_Control_Jointspace_Part // This part is common to Driving Force Control and Driving Force Distribution Control
-#define Enable_Driving_Force_Control
-// #define Enable_Driving_Force_Distribution_Control
+// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Distribution_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -1337,15 +1337,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        if( t < t_experiment -3.0 ){
-          // vx_cmd = 0.5;
-          vy_cmd = 0.5;
-          // dphi_cmd = 1.0;
-        }else{
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if( t < t_experiment -3.0 ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = -0.5;
+        //   // dphi_cmd = 1.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1409,27 +1409,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // omega = 0.5;
         // r     = 0.6;//0.5;
 
-        // if( t < 3.0 ){
-        //   omega = 0.1;
-        // }else if( t < 6.0 ){
-        //   omega = 0.5;
-        // }else if( t < 9.0 ){
-        //   omega = 0.1;
-        // }else if( t < 12.0 ){
-        //   omega = 0.5;
-        // }else{
-        //   omega = 0.0;
-        // }
+        if( t < 3.0 ){
+          omega = 0.1;
+        }else if( t < 6.0 ){
+          omega = 0.5;
+        }else if( t < 9.0 ){
+          omega = 0.1;
+        }else if( t < 12.0 ){
+          omega = 0.5;
+        }else{
+          omega = 0.0;
+        }
 
-        // if(t < t_experiment - 3.0){
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = r * omega;
-        //   dphi_cmd = omega;
-        // }else{
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if(t < t_experiment - 3.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
         
         // if( t < 3.0 ){
         //   r = 0.2;
@@ -1504,15 +1504,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        #ifdef Enable_Driving_Force_Distribution_Control
-        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
-        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
-        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
-
-        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
-        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
-        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
-
         v1_x = vx_res - L * yaw_rate;
         v2_x = vx_res + L * yaw_rate;
         v3_x = vx_res + L * yaw_rate;
@@ -1523,10 +1514,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         v3_y = vy_res + W * yaw_rate;
         v4_y = vy_res + W * yaw_rate;
 
-        if( v1_x < epsilon && v1_x > - epsilon ) v1_x = epsilon;// fabsf( v1_x ) * epsilon;
-        if( v2_x < epsilon && v2_x > - epsilon ) v2_x = epsilon;// fabsf( v2_x ) * epsilon;
-        if( v3_x < epsilon && v3_x > - epsilon ) v3_x = epsilon;// fabsf( v3_x ) * epsilon;
-        if( v4_x < epsilon && v4_x > - epsilon ) v4_x = epsilon;// fabsf( v4_x ) * epsilon;
+        // if( v1_x < epsilon && v1_x > - epsilon ) v1_x = epsilon;// fabsf( v1_x ) * epsilon;
+        // if( v2_x < epsilon && v2_x > - epsilon ) v2_x = epsilon;// fabsf( v2_x ) * epsilon;
+        // if( v3_x < epsilon && v3_x > - epsilon ) v3_x = epsilon;// fabsf( v3_x ) * epsilon;
+        // if( v4_x < epsilon && v4_x > - epsilon ) v4_x = epsilon;// fabsf( v4_x ) * epsilon;
 
         // alpha_1 = atanf( v1_y / v1_x );
         // alpha_2 = atanf( v2_y / v2_x );
@@ -1542,6 +1533,50 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
         w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
         w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
+
+        // w1 = 0.5;
+        // w2 = 0.5;
+        // w3 = 0.5;
+        // w4 = 0.5;
+
+        #ifdef Enable_Driving_Force_Distribution_Control
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
+
+        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
+        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
+        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
+
+        // v1_x = vx_res - L * yaw_rate;
+        // v2_x = vx_res + L * yaw_rate;
+        // v3_x = vx_res + L * yaw_rate;
+        // v4_x = vx_res - L * yaw_rate;
+
+        // v1_y = vy_res - W * yaw_rate;
+        // v2_y = vy_res - W * yaw_rate;
+        // v3_y = vy_res + W * yaw_rate;
+        // v4_y = vy_res + W * yaw_rate;
+
+        // if( v1_x < epsilon && v1_x > - epsilon ) v1_x = epsilon;// fabsf( v1_x ) * epsilon;
+        // if( v2_x < epsilon && v2_x > - epsilon ) v2_x = epsilon;// fabsf( v2_x ) * epsilon;
+        // if( v3_x < epsilon && v3_x > - epsilon ) v3_x = epsilon;// fabsf( v3_x ) * epsilon;
+        // if( v4_x < epsilon && v4_x > - epsilon ) v4_x = epsilon;// fabsf( v4_x ) * epsilon;
+
+        // // alpha_1 = atanf( v1_y / v1_x );
+        // // alpha_2 = atanf( v2_y / v2_x );
+        // // alpha_3 = atanf( v3_y / v3_x );
+        // // alpha_4 = atanf( v4_y / v4_x );
+
+        // alpha_1 = atan2f( v1_y , v1_x );
+        // alpha_2 = atan2f( v2_y , v2_x );
+        // alpha_3 = atan2f( v3_y , v3_x );
+        // alpha_4 = atan2f( v4_y , v4_x );
+
+        // w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
+        // w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
+        // w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
+        // w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
 
         // w1 = 0.5;
         // w2 = 0.5;
