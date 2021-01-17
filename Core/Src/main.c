@@ -474,7 +474,7 @@ float delta_dtheta4_pre = 0.0;
 // float Kp_vv_phi = 5.0;
 #define Kp_vv_x 1.75f//5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
 #define Kp_vv_y 1.75f//5.0f
-#define Kp_vv_phi 1.75f//5.0f
+#define Kp_vv_phi 2.3f//1.75f//5.0f as of 2021/01/17 1.75 -> 2.3
 
 float ddx_ref = 0.0;
 float ddy_ref = 0.0;
@@ -771,7 +771,7 @@ float M_YMO_pre = 0.0;
 
 
 // * Save variables in SRAM
-#define N_SRAM 500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
+#define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 // #define N_SRAM 1100
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
@@ -1339,8 +1339,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // if( t < t_experiment -3.0 ){
         //   // vx_cmd = 0.5;
-        //   vy_cmd = -0.5;
-        //   // dphi_cmd = 1.0;
+        //   // vy_cmd = -0.5;
+        //   dphi_cmd = 1.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
@@ -1400,12 +1400,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        // omega = 0.5;// Period T is 2pi / omega
-        // r     = 0.75;
+        omega = 0.5;// Period T is 2pi / omega
+        r     = 0.75;
         // omega = 0.3;
         // r     = 0.45;
-        omega = 0.5;
-        r     = 0.3;// * Internal Singular Point
+        // omega = 0.5;
+        // r     = 0.3;// * Internal Singular Point
         // omega = 0.5;
         // r     = 0.6;//0.5;
 
