@@ -635,19 +635,18 @@ float tan_beta_2_hat_pre = 0.0;
 float tan_beta_3_hat_pre = 0.0;
 float tan_beta_4_hat_pre = 0.0;
 
-#define Covariance_initial 5000.0f//1000.0f
+// #define Covariance_initial 100000.0f//50000.0f//10000.0f//5000.0f//1000.0f
+#define Gamma 0.1f//0.3f//1000.0f//0.1f// 10000.0f
 
-float P1_k = Covariance_initial;// Covariance matrix at k
-float P2_k = Covariance_initial;
-float P3_k = Covariance_initial;
-float P4_k = Covariance_initial;
+float P1_k = Gamma;//Covariance_initial;// Covariance matrix at k
+float P2_k = Gamma;//Covariance_initial;
+float P3_k = Gamma;//Covariance_initial;
+float P4_k = Gamma;//Covariance_initial;
 
-float P1_k_1 = Covariance_initial;// Covariance matrix at k - 1
-float P2_k_1 = Covariance_initial;
-float P3_k_1 = Covariance_initial;
-float P4_k_1 = Covariance_initial;
-
-#define Gamma 0.1f//1000.0f//0.1f// 10000.0f
+float P1_k_1 = Gamma;//Covariance_initial;// Covariance matrix at k - 1
+float P2_k_1 = Gamma;//Covariance_initial;
+float P3_k_1 = Gamma;//Covariance_initial;
+float P4_k_1 = Gamma;//Covariance_initial;
 
 float Kappa_1 = 0.0;
 float Kappa_2 = 0.0;
@@ -1461,14 +1460,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // ! --3-- : Steady circle turning while pointing the side toward center of trajectory
-        omega = 0.5;// Period T is 2pi / omega
-        r     = 0.75;
+        // omega = 0.5;// Period T is 2pi / omega
+        // r     = 0.75;
         // omega = 0.3;
         // r     = 0.45;
         // omega = 0.5;
         // r     = 0.3;// * Internal Singular Point
         // omega = 0.5;
         // r     = 0.6;//0.5;
+        omega = 0.8;
+        r = 0.6;//0.4;
 
         if( t < 3.0 ){
           omega = 0.1;
@@ -1482,15 +1483,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           omega = 0.0;
         }
 
-        if(t < t_experiment - 3.0){
-          vx_cmd   = 0.0;
-          vy_cmd   = r * omega;
-          dphi_cmd = omega;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
         
         // if( t < 3.0 ){
         //   r = 0.2;
@@ -1503,6 +1495,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }else{
         //   r = 0.0;
         // }
+        if(t < t_experiment - 3.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
