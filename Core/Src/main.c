@@ -529,10 +529,10 @@ float tau_dob2_pre = 0.0;
 float tau_dob3_pre = 0.0;
 float tau_dob4_pre = 0.0;
 
-float tau_dis1_raw = 0.0;// Raw data (Without LPF)
-float tau_dis2_raw = 0.0;
-float tau_dis3_raw = 0.0;
-float tau_dis4_raw = 0.0;
+// float tau_dis1_raw = 0.0;// Raw data (Without LPF)
+// float tau_dis2_raw = 0.0;
+// float tau_dis3_raw = 0.0;
+// float tau_dis4_raw = 0.0;
 
 // float tau_dis1_raw_pre = 0.0;
 // float tau_dis2_raw_pre = 0.0;
@@ -558,10 +558,10 @@ float tau_dfob2_pre = 0.0;
 float tau_dfob3_pre = 0.0;
 float tau_dfob4_pre = 0.0;
 
-float tau_dfob1_raw = 0.0;// Raw data (Without LPF)
-float tau_dfob2_raw = 0.0;
-float tau_dfob3_raw = 0.0;
-float tau_dfob4_raw = 0.0;
+// float tau_dfob1_raw = 0.0;// Raw data (Without LPF)
+// float tau_dfob2_raw = 0.0;
+// float tau_dfob3_raw = 0.0;
+// float tau_dfob4_raw = 0.0;
 
 float integral_tau_dfob1 = 0.0;
 float integral_tau_dfob2 = 0.0;
@@ -609,6 +609,53 @@ float v4_y = 0.0;
 // * For Driving Force Distribution Control
 
 
+// * Fixed Trace Algorithm, FTA
+float alpha_1_hat = 0.0;
+float alpha_2_hat = 0.0;
+float alpha_3_hat = 0.0;
+float alpha_4_hat = 0.0;
+
+// float alpha_1_hat_pre = 0.0;
+// float alpha_2_hat_pre = 0.0;
+// float alpha_3_hat_pre = 0.0;
+// float alpha_4_hat_pre = 0.0;
+
+float tan_alpha_1_hat = 0.0;
+float tan_alpha_2_hat = 0.0;
+float tan_alpha_3_hat = 0.0;
+float tan_alpha_4_hat = 0.0;
+
+float tan_beta_1_hat = 0.0;
+float tan_beta_2_hat = 0.0;
+float tan_beta_3_hat = 0.0;
+float tan_beta_4_hat = 0.0;
+
+float tan_beta_1_hat_pre = 0.0;
+float tan_beta_2_hat_pre = 0.0;
+float tan_beta_3_hat_pre = 0.0;
+float tan_beta_4_hat_pre = 0.0;
+
+#define Covariance_initial 5000.0f//1000.0f
+
+float P1_k = Covariance_initial;// Covariance matrix at k
+float P2_k = Covariance_initial;
+float P3_k = Covariance_initial;
+float P4_k = Covariance_initial;
+
+float P1_k_1 = Covariance_initial;// Covariance matrix at k - 1
+float P2_k_1 = Covariance_initial;
+float P3_k_1 = Covariance_initial;
+float P4_k_1 = Covariance_initial;
+
+#define Gamma 0.1f//1000.0f//0.1f// 10000.0f
+
+float Kappa_1 = 0.0;
+float Kappa_2 = 0.0;
+float Kappa_3 = 0.0;
+float Kappa_4 = 0.0;
+// * Fixed Trace Algorithm, FTA
+
+
 // * IMU
 bno055_vector_t Euler;
 bno055_vector_t Gyro;
@@ -628,18 +675,18 @@ float roll_rate = 0.0;
 float pitch_rate = 0.0;
 
 float yaw_rate_pre  = 0.0;
-float yaw_rate_pre2 = 0.0;
+// float yaw_rate_pre2 = 0.0;
 
-float yaw_rate_notch      = 0.0;
-float yaw_rate_notch_pre  = 0.0;
-float yaw_rate_notch_pre2 = 0.0;
+// float yaw_rate_notch      = 0.0;
+// float yaw_rate_notch_pre  = 0.0;
+// float yaw_rate_notch_pre2 = 0.0;
 
 float d_yawrate     = 0.0;// [rad/sec^2] ddphi_res : angular acceleration
 float d_yawrate_pre = 0.0;
 
-#define zeta1 1.0f // Inverse of Q value
-#define N_roller 9.0f // Number of free roller
-float G_notch1 = 90.0; // [rad/sec]
+// #define zeta1 1.0f // Inverse of Q value
+// #define N_roller 9.0f // Number of free roller
+// float G_notch1 = 90.0; // [rad/sec]
 
 float Acc_x = 0.0;// Sensor coordinate system
 float Acc_y = 0.0;
@@ -869,7 +916,7 @@ float yaw_rate_SRAM[N_SRAM] = {};
 float roll_rate_SRAM[N_SRAM] = {};
 float pitch_rate_SRAM[N_SRAM] = {};
 
-float yaw_rate_notch_SRAM[N_SRAM] = {};
+// float yaw_rate_notch_SRAM[N_SRAM] = {};
 
 float Acc_x_SRAM[N_SRAM] = {};
 float Acc_y_SRAM[N_SRAM] = {};
@@ -927,6 +974,20 @@ float alpha_2_SRAM[N_SRAM] = {};
 float alpha_3_SRAM[N_SRAM] = {};
 float alpha_4_SRAM[N_SRAM] = {};
 
+float alpha_1_hat_SRAM[N_SRAM] = {};
+float alpha_2_hat_SRAM[N_SRAM] = {};
+float alpha_3_hat_SRAM[N_SRAM] = {};
+float alpha_4_hat_SRAM[N_SRAM] = {};
+
+float tan_beta_1_hat_SRAM[N_SRAM] = {};
+float tan_beta_2_hat_SRAM[N_SRAM] = {};
+float tan_beta_3_hat_SRAM[N_SRAM] = {};
+float tan_beta_4_hat_SRAM[N_SRAM] = {};
+
+float Kappa_1_SRAM[N_SRAM] = {};
+float Kappa_2_SRAM[N_SRAM] = {};
+float Kappa_3_SRAM[N_SRAM] = {};
+float Kappa_4_SRAM[N_SRAM] = {};
 // * Save variables in SRAM
 
 // * Command
@@ -936,14 +997,14 @@ float A = 0.0;// [m] : Amplitude of sin wave movement
 // * Command
 
 // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
-float T_hat_11 = 0.0;
-float T_hat_12 = 0.0;
+// float T_hat_11 = 0.0;
+// float T_hat_12 = 0.0;
 
-float T_hat_11_Z1 = 0.0;
-float T_hat_12_Z1 = 0.0;
+// float T_hat_11_Z1 = 0.0;
+// float T_hat_12_Z1 = 0.0;
 
-float P_11    = 0.0;
-float P_11_Z1 = 0.0;
+// float P_11    = 0.0;
+// float P_11_Z1 = 0.0;
 // * RLS with forgetting factor (Estimate Jacobi matrix T_hat)
 
 
@@ -1070,7 +1131,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // printf("\r\n");
 
         // * Notch Filter ( Band-stop Filter ) : Back Difference
-        yaw_rate_notch = 1.0 / ( 1.0 + 2.0*zeta1*G_notch1*dt + G_notch1*G_notch1*dt*dt ) * ( 2.0*(1.0+zeta1*G_notch1*dt)*yaw_rate_notch_pre - yaw_rate_notch_pre2 + (1.0 + G_notch1*G_notch1*dt*dt)*yaw_rate - 2.0*yaw_rate_pre + yaw_rate_pre2 );
+        // yaw_rate_notch = 1.0 / ( 1.0 + 2.0*zeta1*G_notch1*dt + G_notch1*G_notch1*dt*dt ) * ( 2.0*(1.0+zeta1*G_notch1*dt)*yaw_rate_notch_pre - yaw_rate_notch_pre2 + (1.0 + G_notch1*G_notch1*dt*dt)*yaw_rate - 2.0*yaw_rate_pre + yaw_rate_pre2 );
         // * Notch Filter ( Band-stop Filter ) : Back Difference
 
         if     ( yaw - yaw_pre > 2.0*pi/2.0 ) yaw_digit--;
@@ -1337,10 +1398,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // * Command
 
-        // if( t < t_experiment -3.0 ){
+        // if( t < t_experiment - 4.0 ){
         //   // vx_cmd = 0.5;
-        //   // vy_cmd = -0.5;
-        //   dphi_cmd = 1.0;
+        //   vy_cmd = 0.5;
+        //   // dphi_cmd = 1.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
@@ -1529,15 +1590,89 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         alpha_3 = atan2f( v3_y , v3_x );
         alpha_4 = atan2f( v4_y , v4_x );
 
-        w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
-        w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
-        w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
-        w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
+        // w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
+        // w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
+        // w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
+        // w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
+
+        // * With FTA
+        w1 = cos( pi / 4.0 + alpha_1_hat ) * cos( pi / 4.0 + alpha_1_hat );
+        w2 = cos( pi / 4.0 - alpha_2_hat ) * cos( pi / 4.0 - alpha_2_hat );
+        w3 = cos( pi / 4.0 + alpha_3_hat ) * cos( pi / 4.0 + alpha_3_hat );
+        w4 = cos( pi / 4.0 - alpha_4_hat ) * cos( pi / 4.0 - alpha_4_hat );
+        // * With FTA
 
         // w1 = 0.5;
         // w2 = 0.5;
         // w3 = 0.5;
         // w4 = 0.5;
+
+        // * Fixed Trace Algorithm, FTA
+        // alpha_1_hat = alpha_1_hat_pre - P1_k_1 / ( 1.0 + P1_k_1 ) * ( alpha_1_hat_pre - alpha_1 );
+        // alpha_2_hat = alpha_2_hat_pre - P2_k_1 / ( 1.0 + P2_k_1 ) * ( alpha_2_hat_pre - alpha_2 );
+        // alpha_3_hat = alpha_3_hat_pre - P3_k_1 / ( 1.0 + P3_k_1 ) * ( alpha_3_hat_pre - alpha_3 );
+        // alpha_4_hat = alpha_4_hat_pre - P4_k_1 / ( 1.0 + P4_k_1 ) * ( alpha_4_hat_pre - alpha_4 );
+
+        tan_beta_1_hat = tan_beta_1_hat_pre - P1_k_1 * v1_y / ( 1.0 + v1_y * P1_k_1 * v1_y ) * ( tan_beta_1_hat_pre * v1_y - v1_x );
+        tan_beta_2_hat = tan_beta_2_hat_pre - P2_k_1 * v2_y / ( 1.0 + v2_y * P2_k_1 * v2_y ) * ( tan_beta_2_hat_pre * v2_y - v2_x );
+        tan_beta_3_hat = tan_beta_3_hat_pre - P3_k_1 * v3_y / ( 1.0 + v3_y * P3_k_1 * v3_y ) * ( tan_beta_3_hat_pre * v3_y - v3_x );
+        tan_beta_4_hat = tan_beta_4_hat_pre - P4_k_1 * v4_y / ( 1.0 + v4_y * P4_k_1 * v4_y ) * ( tan_beta_4_hat_pre * v4_y - v4_x );
+
+        // if( vx_cmd == 0.0 ){
+        //   tan_beta_1_hat = fabsf( tan_beta_1_hat );
+        //   tan_beta_2_hat = fabsf( tan_beta_2_hat );
+        //   tan_beta_3_hat = fabsf( tan_beta_3_hat );
+        //   tan_beta_4_hat = fabsf( tan_beta_4_hat );
+        // }
+
+        Kappa_1 = 1.0 / ( 1.0 + Gamma * ( v1_y * v1_y ) );
+        Kappa_2 = 1.0 / ( 1.0 + Gamma * ( v2_y * v2_y ) );
+        Kappa_3 = 1.0 / ( 1.0 + Gamma * ( v3_y * v3_y ) );
+        Kappa_4 = 1.0 / ( 1.0 + Gamma * ( v4_y * v4_y ) );
+
+        P1_k = 1.0 / Kappa_1 * ( P1_k_1 - P1_k_1 * v1_y * v1_y * P1_k_1 / ( 1.0 + v1_y * P1_k_1 * v1_y ) );// ! Be careful of zero-division by Kappa's initial value!
+        P2_k = 1.0 / Kappa_2 * ( P2_k_1 - P2_k_1 * v2_y * v2_y * P2_k_1 / ( 1.0 + v2_y * P2_k_1 * v2_y ) );
+        P3_k = 1.0 / Kappa_3 * ( P3_k_1 - P3_k_1 * v3_y * v3_y * P3_k_1 / ( 1.0 + v3_y * P3_k_1 * v3_y ) );
+        P4_k = 1.0 / Kappa_4 * ( P4_k_1 - P4_k_1 * v4_y * v4_y * P4_k_1 / ( 1.0 + v4_y * P4_k_1 * v4_y ) );
+
+        // if ( tan_beta_1_hat == 0.0 ) tan_beta_1_hat = epsilon;
+        // if ( tan_beta_2_hat == 0.0 ) tan_beta_2_hat = epsilon;
+        // if ( tan_beta_3_hat == 0.0 ) tan_beta_3_hat = epsilon;
+        // if ( tan_beta_4_hat == 0.0 ) tan_beta_4_hat = epsilon;
+
+        tan_alpha_1_hat = 1.0 / tan_beta_1_hat;
+        tan_alpha_2_hat = 1.0 / tan_beta_2_hat;
+        tan_alpha_3_hat = 1.0 / tan_beta_3_hat;
+        tan_alpha_4_hat = 1.0 / tan_beta_4_hat;
+
+        alpha_1_hat = atan2f( tan_alpha_1_hat, 1.0 );// Argument Order : ( y, x )
+        alpha_2_hat = atan2f( tan_alpha_2_hat, 1.0 );
+        alpha_3_hat = atan2f( tan_alpha_3_hat, 1.0 );
+        alpha_4_hat = atan2f( tan_alpha_4_hat, 1.0 );
+
+        // if(isnan(tan_beta_1_hat)) printf("tan_beta_1_hat");
+        // if(isnan(P1_k)) printf("P1_k");
+        // if(isnan(Kappa_1)) printf("Kappa_1");
+        // if(isnan(tan_alpha_1_hat)) printf("tan_alpha_1_hat");
+        // if(isnan(alpha_1_hat)) printf("alpha_1_hat");
+        // printf("\r\n");
+
+        // printf("P1_k:%f", P1_k);
+        // printf("\r\n");
+
+          // * Save previous values
+          tan_beta_1_hat_pre = tan_beta_1_hat;
+          tan_beta_2_hat_pre = tan_beta_2_hat;
+          tan_beta_3_hat_pre = tan_beta_3_hat;
+          tan_beta_4_hat_pre = tan_beta_4_hat;
+
+          P1_k_1 = P1_k;
+          P2_k_1 = P2_k;
+          P3_k_1 = P3_k;
+          P4_k_1 = P4_k;
+          // * Save previous values
+        // * Fixed Trace Algorithm, FTA
+
 
         #ifdef Enable_Driving_Force_Distribution_Control
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
@@ -2086,10 +2221,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         Acc_y_correct_pre = Acc_y_correct;
         d_yawrate_pre     = d_yawrate;
 
-        yaw_rate_pre2       = yaw_rate_pre;
+        // yaw_rate_pre2       = yaw_rate_pre;
         yaw_rate_pre        = yaw_rate;
-        yaw_rate_notch_pre2 = yaw_rate_notch_pre;
-        yaw_rate_notch_pre  = yaw_rate_notch;
+        // yaw_rate_notch_pre2 = yaw_rate_notch_pre;
+        // yaw_rate_notch_pre  = yaw_rate_notch;
         // * Save previous values
 
         // if(loop % 1000 == 0){
@@ -2243,7 +2378,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
           yaw_rate_SRAM[i_save]   = yaw_rate;//Gyro.z;
 
-          yaw_rate_notch_SRAM[i_save]  = yaw_rate_notch;
+          // yaw_rate_notch_SRAM[i_save]  = yaw_rate_notch;
 
           roll_rate_SRAM[i_save]  = roll_rate;//Gyro.x;
           pitch_rate_SRAM[i_save] = pitch_rate;//Gyro.y;
@@ -2270,6 +2405,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           alpha_2_SRAM[i_save] = alpha_2;
           alpha_3_SRAM[i_save] = alpha_3;
           alpha_4_SRAM[i_save] = alpha_4;
+
+          alpha_1_hat_SRAM[i_save] = alpha_1_hat;
+          alpha_2_hat_SRAM[i_save] = alpha_2_hat;
+          alpha_3_hat_SRAM[i_save] = alpha_3_hat;
+          alpha_4_hat_SRAM[i_save] = alpha_4_hat;
+
+          tan_beta_1_hat_SRAM[i_save] = tan_beta_1_hat;
+          tan_beta_2_hat_SRAM[i_save] = tan_beta_2_hat;
+          tan_beta_3_hat_SRAM[i_save] = tan_beta_3_hat;
+          tan_beta_4_hat_SRAM[i_save] = tan_beta_4_hat;
+
+          Kappa_1_SRAM[i_save] = Kappa_1;
+          Kappa_2_SRAM[i_save] = Kappa_2;
+          Kappa_3_SRAM[i_save] = Kappa_3;
+          Kappa_4_SRAM[i_save] = Kappa_4;
 
           #ifdef Enable_Slip_Ratio_Observer
           lambda_1_hat_SRAM[i_save] = lambda_1_hat;
@@ -2475,7 +2625,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", pitch_SRAM[i_output]);
 
           printf("%f, ", yaw_rate_SRAM[i_output]);
-          printf("%f, ", yaw_rate_notch_SRAM[i_output]);
+          // printf("%f, ", yaw_rate_notch_SRAM[i_output]);
 
           printf("%f, ", roll_rate_SRAM[i_output]);
           printf("%f, ", pitch_rate_SRAM[i_output]);
@@ -2502,6 +2652,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", alpha_2_SRAM[i_output]);
           printf("%f, ", alpha_3_SRAM[i_output]);
           printf("%f, ", alpha_4_SRAM[i_output]);
+
+          printf("%f, ", alpha_1_hat_SRAM[i_output]);
+          printf("%f, ", alpha_2_hat_SRAM[i_output]);
+          printf("%f, ", alpha_3_hat_SRAM[i_output]);
+          printf("%f, ", alpha_4_hat_SRAM[i_output]);
+
+          printf("%f, ", tan_beta_1_hat_SRAM[i_output]);
+          printf("%f, ", tan_beta_2_hat_SRAM[i_output]);
+          printf("%f, ", tan_beta_3_hat_SRAM[i_output]);
+          printf("%f, ", tan_beta_4_hat_SRAM[i_output]);
+
+          printf("%f, ", Kappa_1_SRAM[i_output]);
+          printf("%f, ", Kappa_2_SRAM[i_output]);
+          printf("%f, ", Kappa_3_SRAM[i_output]);
+          printf("%f, ", Kappa_4_SRAM[i_output]);
 
           #ifdef Enable_Slip_Ratio_Observer
           printf("%f, ", lambda_1_hat_SRAM[i_output]);
