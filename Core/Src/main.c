@@ -1399,8 +1399,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // if( t < t_experiment - 4.0 ){
         //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
-        //   // dphi_cmd = 1.0;
+        //   // vy_cmd = 0.5;
+        //   dphi_cmd = 1.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
@@ -1408,19 +1408,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }
 
         // if( t < 3.0 ){
-        //   vy_cmd = 0.5;
-        // }else if( t < 6.0 ){
-        //   vx_cmd = 0.5;
+        //   vy_cmd = 0.3;
+        // }else if( t < 5.0 ){
+        //   vx_cmd = -0.3;
         //   vy_cmd = 0.0;
-        // }else if( t < 9.0 ){
+        // }else if( t < 10.0 ){
         //   vx_cmd = 0.0;
-        //   vy_cmd = -0.5;
-        // }else if( t < 12.0 ){
-        //   vx_cmd = -0.5;
         //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.5;
+        // // }
+        // // else if( t < 12.0 ){
+        // //   vx_cmd = 0.0;
+        // //   vy_cmd = 0.0;
+        // //   dphi_cmd = 0.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
         // }
 
         // if( t < 3.0 ){
@@ -1471,18 +1475,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         omega = 0.8;
         r = 0.6;//0.4;
 
-        if( t < 3.0 ){
-          omega = 0.1;
-        }else if( t < 6.0 ){
-          omega = 0.5;
-        }else if( t < 9.0 ){
+        // if( t < 3.0 ){
+        //   omega = 0.1;
+        // }else if( t < 6.0 ){
+        //   omega = 0.5;
+        // }else if( t < 9.0 ){
+        //   omega = 0.1;
+        // }else if( t < 12.0 ){
+        //   omega = 0.5;
+        // }else{
+        //   omega = 0.0;
+        // }
+
+        if( t < 6.0 ){
           omega = 0.1;
         }else if( t < 12.0 ){
           omega = 0.5;
         }else{
           omega = 0.0;
         }
-
         
         // if( t < 3.0 ){
         //   r = 0.2;
