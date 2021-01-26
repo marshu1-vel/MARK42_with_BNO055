@@ -1472,7 +1472,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // r     = 0.3;// * Internal Singular Point
         // omega = 0.5;
         // r     = 0.6;//0.5;
-        omega = 0.8;
+        // omega = 0.8;
         r = 0.6;//0.4;
 
         // if( t < 3.0 ){
@@ -1487,13 +1487,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   omega = 0.0;
         // }
 
-        if( t < 6.0 ){
-          omega = 0.1;
-        }else if( t < 12.0 ){
-          omega = 0.5;
-        }else{
-          omega = 0.0;
-        }
+        // if( t < 6.0 ){
+        //   omega = 0.1;
+        // }else if( t < 12.0 ){
+        //   omega = 0.5;
+        // }else{
+        //   omega = 0.0;
+        // }
+        omega = 0.5;
         
         // if( t < 3.0 ){
         //   r = 0.2;
@@ -1506,6 +1507,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // }else{
         //   r = 0.0;
         // }
+
+        if( t < 6.0 ){
+          r = 0.1 * t;
+        }else{
+          r = 0.6;
+        }
+
         if(t < t_experiment - 3.0){
           vx_cmd   = 0.0;
           vy_cmd   = r * omega;
@@ -1602,16 +1610,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         alpha_3 = atan2f( v3_y , v3_x );
         alpha_4 = atan2f( v4_y , v4_x );
 
-        // w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
-        // w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
-        // w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
-        // w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
+        w1 = cos( pi / 4.0 + alpha_1 ) * cos( pi / 4.0 + alpha_1 );
+        w2 = cos( pi / 4.0 - alpha_2 ) * cos( pi / 4.0 - alpha_2 );
+        w3 = cos( pi / 4.0 + alpha_3 ) * cos( pi / 4.0 + alpha_3 );
+        w4 = cos( pi / 4.0 - alpha_4 ) * cos( pi / 4.0 - alpha_4 );
 
         // * With FTA
-        w1 = cos( pi / 4.0 + alpha_1_hat ) * cos( pi / 4.0 + alpha_1_hat );
-        w2 = cos( pi / 4.0 - alpha_2_hat ) * cos( pi / 4.0 - alpha_2_hat );
-        w3 = cos( pi / 4.0 + alpha_3_hat ) * cos( pi / 4.0 + alpha_3_hat );
-        w4 = cos( pi / 4.0 - alpha_4_hat ) * cos( pi / 4.0 - alpha_4_hat );
+        // w1 = cos( pi / 4.0 + alpha_1_hat ) * cos( pi / 4.0 + alpha_1_hat );
+        // w2 = cos( pi / 4.0 - alpha_2_hat ) * cos( pi / 4.0 - alpha_2_hat );
+        // w3 = cos( pi / 4.0 + alpha_3_hat ) * cos( pi / 4.0 + alpha_3_hat );
+        // w4 = cos( pi / 4.0 - alpha_4_hat ) * cos( pi / 4.0 - alpha_4_hat );
         // * With FTA
 
         // w1 = 0.5;
