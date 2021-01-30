@@ -10,8 +10,8 @@
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 #define Enable_Driving_Force_Control_Jointspace_Part // This part is common to Driving Force Control and Driving Force Distribution Control
-// #define Enable_Driving_Force_Control
-#define Enable_Driving_Force_Distribution_Control
+#define Enable_Driving_Force_Control
+// #define Enable_Driving_Force_Distribution_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -636,7 +636,7 @@ float tan_beta_3_hat_pre = 0.0;
 float tan_beta_4_hat_pre = 0.0;
 
 // #define Covariance_initial 100000.0f//50000.0f//10000.0f//5000.0f//1000.0f
-#define Gamma 0.1f//0.3f//1000.0f//0.1f// 10000.0f
+#define Gamma 0.1f//0.5f//0.1f//0.3f//1000.0f//0.1f// 10000.0f
 
 float P1_k = Gamma;//Covariance_initial;// Covariance matrix at k
 float P2_k = Gamma;//Covariance_initial;
@@ -652,6 +652,8 @@ float Kappa_1 = 0.0;
 float Kappa_2 = 0.0;
 float Kappa_3 = 0.0;
 float Kappa_4 = 0.0;
+
+#define epsilon_FTA 0.02//0.001
 // * Fixed Trace Algorithm, FTA
 
 
@@ -818,7 +820,7 @@ float M_YMO_pre = 0.0;
 
 // * Save variables in SRAM
 #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-// #define N_SRAM 1100
+// #define N_SRAM 700
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -1399,28 +1401,44 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // if( t < t_experiment - 4.0 ){
         //   // vx_cmd = 0.5;
-        //   // vy_cmd = 0.5;
-        //   dphi_cmd = 1.0;
+        //   vy_cmd = 0.5;
+        //   // dphi_cmd = 1.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
         //   dphi_cmd = 0.0;
         // }
 
+        if( t < 3.0 ){
+          vy_cmd = 0.5;
+        }else if( t < t_experiment - 9.0 ){
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }else if( t < t_experiment - 6.0 ){
+          vx_cmd = 0.0;
+          vy_cmd = 0.5;
+          dphi_cmd = 0.0;
+        }else if( t < t_experiment - 3.0 ){
+          vx_cmd = 0.0;
+          vy_cmd = 0.0;
+          dphi_cmd = 0.0;
+        }
+
         // if( t < 3.0 ){
-        //   vy_cmd = 0.3;
-        // }else if( t < 5.0 ){
-        //   vx_cmd = -0.3;
-        //   vy_cmd = 0.0;
-        // }else if( t < 10.0 ){
+        //   vy_cmd = 0.5;
+        // }else if( t < t_experiment - 8.0 ){
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
-        //   dphi_cmd = 0.5;
-        // // }
-        // // else if( t < 12.0 ){
-        // //   vx_cmd = 0.0;
-        // //   vy_cmd = 0.0;
-        // //   dphi_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }else if( t < t_experiment - 6.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.5;
+        //   dphi_cmd = 0.0;
+        // }else if( t < t_experiment - 4.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.3;
+        //   dphi_cmd = 0.0;
         // }else{
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
@@ -1508,21 +1526,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   r = 0.0;
         // }
 
-        if( t < 6.0 ){
-          r = 0.1 * t;
-        }else{
-          r = 0.6;
-        }
+        // if( t < 6.0 ){
+        //   r = 0.1 * t;
+        // }else{
+        //   r = 0.6;
+        // }
 
-        if(t < t_experiment - 3.0){
-          vx_cmd   = 0.0;
-          vy_cmd   = r * omega;
-          dphi_cmd = omega;
-        }else{
-          vx_cmd   = 0.0;
-          vy_cmd   = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if(t < t_experiment - 3.0){
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = r * omega;
+        //   dphi_cmd = omega;
+        // }else{
+        //   vx_cmd   = 0.0;
+        //   vy_cmd   = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1633,42 +1651,88 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         // alpha_3_hat = alpha_3_hat_pre - P3_k_1 / ( 1.0 + P3_k_1 ) * ( alpha_3_hat_pre - alpha_3 );
         // alpha_4_hat = alpha_4_hat_pre - P4_k_1 / ( 1.0 + P4_k_1 ) * ( alpha_4_hat_pre - alpha_4 );
 
-        tan_beta_1_hat = tan_beta_1_hat_pre - P1_k_1 * v1_y / ( 1.0 + v1_y * P1_k_1 * v1_y ) * ( tan_beta_1_hat_pre * v1_y - v1_x );
-        tan_beta_2_hat = tan_beta_2_hat_pre - P2_k_1 * v2_y / ( 1.0 + v2_y * P2_k_1 * v2_y ) * ( tan_beta_2_hat_pre * v2_y - v2_x );
-        tan_beta_3_hat = tan_beta_3_hat_pre - P3_k_1 * v3_y / ( 1.0 + v3_y * P3_k_1 * v3_y ) * ( tan_beta_3_hat_pre * v3_y - v3_x );
-        tan_beta_4_hat = tan_beta_4_hat_pre - P4_k_1 * v4_y / ( 1.0 + v4_y * P4_k_1 * v4_y ) * ( tan_beta_4_hat_pre * v4_y - v4_x );
-
         // if( vx_cmd == 0.0 ){
-        //   tan_beta_1_hat = fabsf( tan_beta_1_hat );
-        //   tan_beta_2_hat = fabsf( tan_beta_2_hat );
-        //   tan_beta_3_hat = fabsf( tan_beta_3_hat );
-        //   tan_beta_4_hat = fabsf( tan_beta_4_hat );
+        //   v1_x = 0.0;
+        //   v2_x = 0.0;
+        //   v3_x = 0.0;
+        //   v4_x = 0.0;
         // }
 
-        Kappa_1 = 1.0 / ( 1.0 + Gamma * ( v1_y * v1_y ) );
-        Kappa_2 = 1.0 / ( 1.0 + Gamma * ( v2_y * v2_y ) );
-        Kappa_3 = 1.0 / ( 1.0 + Gamma * ( v3_y * v3_y ) );
-        Kappa_4 = 1.0 / ( 1.0 + Gamma * ( v4_y * v4_y ) );
+        // if( v1_x < epsilon_FTA && v1_x > - epsilon_FTA ) v1_x = 0.0;
+        // if( v2_x < epsilon_FTA && v2_x > - epsilon_FTA ) v2_x = 0.0;
+        // if( v3_x < epsilon_FTA && v3_x > - epsilon_FTA ) v3_x = 0.0;
+        // if( v4_x < epsilon_FTA && v4_x > - epsilon_FTA ) v4_x = 0.0;
 
-        P1_k = 1.0 / Kappa_1 * ( P1_k_1 - P1_k_1 * v1_y * v1_y * P1_k_1 / ( 1.0 + v1_y * P1_k_1 * v1_y ) );// ! Be careful of zero-division by Kappa's initial value!
-        P2_k = 1.0 / Kappa_2 * ( P2_k_1 - P2_k_1 * v2_y * v2_y * P2_k_1 / ( 1.0 + v2_y * P2_k_1 * v2_y ) );
-        P3_k = 1.0 / Kappa_3 * ( P3_k_1 - P3_k_1 * v3_y * v3_y * P3_k_1 / ( 1.0 + v3_y * P3_k_1 * v3_y ) );
-        P4_k = 1.0 / Kappa_4 * ( P4_k_1 - P4_k_1 * v4_y * v4_y * P4_k_1 / ( 1.0 + v4_y * P4_k_1 * v4_y ) );
+        // if( vy_res < 0.03 ){
+          tan_beta_1_hat = tan_beta_1_hat_pre - P1_k_1 * v1_y / ( 1.0 + v1_y * P1_k_1 * v1_y ) * ( tan_beta_1_hat_pre * v1_y - v1_x );
+          tan_beta_2_hat = tan_beta_2_hat_pre - P2_k_1 * v2_y / ( 1.0 + v2_y * P2_k_1 * v2_y ) * ( tan_beta_2_hat_pre * v2_y - v2_x );
+          tan_beta_3_hat = tan_beta_3_hat_pre - P3_k_1 * v3_y / ( 1.0 + v3_y * P3_k_1 * v3_y ) * ( tan_beta_3_hat_pre * v3_y - v3_x );
+          tan_beta_4_hat = tan_beta_4_hat_pre - P4_k_1 * v4_y / ( 1.0 + v4_y * P4_k_1 * v4_y ) * ( tan_beta_4_hat_pre * v4_y - v4_x );
 
-        // if ( tan_beta_1_hat == 0.0 ) tan_beta_1_hat = epsilon;
-        // if ( tan_beta_2_hat == 0.0 ) tan_beta_2_hat = epsilon;
-        // if ( tan_beta_3_hat == 0.0 ) tan_beta_3_hat = epsilon;
-        // if ( tan_beta_4_hat == 0.0 ) tan_beta_4_hat = epsilon;
+          // tan_beta_1_hat = tan_beta_1_hat_pre - P1_k_1 * v1_y / ( 1.0 + v1_y * P1_k_1 * v1_y ) * ( tan_beta_1_hat_pre * v1_y + v1_x );
+          // tan_beta_2_hat = tan_beta_2_hat_pre - P2_k_1 * v2_y / ( 1.0 + v2_y * P2_k_1 * v2_y ) * ( tan_beta_2_hat_pre * v2_y + v2_x );
+          // tan_beta_3_hat = tan_beta_3_hat_pre - P3_k_1 * v3_y / ( 1.0 + v3_y * P3_k_1 * v3_y ) * ( tan_beta_3_hat_pre * v3_y + v3_x );
+          // tan_beta_4_hat = tan_beta_4_hat_pre - P4_k_1 * v4_y / ( 1.0 + v4_y * P4_k_1 * v4_y ) * ( tan_beta_4_hat_pre * v4_y + v4_x );
 
-        tan_alpha_1_hat = 1.0 / tan_beta_1_hat;
-        tan_alpha_2_hat = 1.0 / tan_beta_2_hat;
-        tan_alpha_3_hat = 1.0 / tan_beta_3_hat;
-        tan_alpha_4_hat = 1.0 / tan_beta_4_hat;
+          // tan_beta_1_hat = tan_beta_1_hat_pre - P1_k_1 * (-1.0) * v1_y / ( 1.0 + v1_y * P1_k_1 * v1_y ) * ( tan_beta_1_hat_pre * (-1.0) * v1_y - v1_x );
+          // tan_beta_2_hat = tan_beta_2_hat_pre - P2_k_1 * (-1.0) * v2_y / ( 1.0 + v2_y * P2_k_1 * v2_y ) * ( tan_beta_2_hat_pre * (-1.0) * v2_y - v2_x );
+          // tan_beta_3_hat = tan_beta_3_hat_pre - P3_k_1 * (-1.0) * v3_y / ( 1.0 + v3_y * P3_k_1 * v3_y ) * ( tan_beta_3_hat_pre * (-1.0) * v3_y - v3_x );
+          // tan_beta_4_hat = tan_beta_4_hat_pre - P4_k_1 * (-1.0) * v4_y / ( 1.0 + v4_y * P4_k_1 * v4_y ) * ( tan_beta_4_hat_pre * (-1.0) * v4_y - v4_x );
 
-        alpha_1_hat = atan2f( tan_alpha_1_hat, 1.0 );// Argument Order : ( y, x )
-        alpha_2_hat = atan2f( tan_alpha_2_hat, 1.0 );
-        alpha_3_hat = atan2f( tan_alpha_3_hat, 1.0 );
-        alpha_4_hat = atan2f( tan_alpha_4_hat, 1.0 );
+          // if( vx_cmd == 0.0 ){
+          //   tan_beta_1_hat = fabsf( tan_beta_1_hat );
+          //   tan_beta_2_hat = fabsf( tan_beta_2_hat );
+          //   tan_beta_3_hat = fabsf( tan_beta_3_hat );
+          //   tan_beta_4_hat = fabsf( tan_beta_4_hat );
+          // }
+
+          Kappa_1 = 1.0 / ( 1.0 + Gamma * ( v1_y * v1_y ) );
+          Kappa_2 = 1.0 / ( 1.0 + Gamma * ( v2_y * v2_y ) );
+          Kappa_3 = 1.0 / ( 1.0 + Gamma * ( v3_y * v3_y ) );
+          Kappa_4 = 1.0 / ( 1.0 + Gamma * ( v4_y * v4_y ) );
+
+          P1_k = 1.0 / Kappa_1 * ( P1_k_1 - P1_k_1 * v1_y * v1_y * P1_k_1 / ( 1.0 + v1_y * P1_k_1 * v1_y ) );// ! Be careful of zero-division by Kappa's initial value!
+          P2_k = 1.0 / Kappa_2 * ( P2_k_1 - P2_k_1 * v2_y * v2_y * P2_k_1 / ( 1.0 + v2_y * P2_k_1 * v2_y ) );
+          P3_k = 1.0 / Kappa_3 * ( P3_k_1 - P3_k_1 * v3_y * v3_y * P3_k_1 / ( 1.0 + v3_y * P3_k_1 * v3_y ) );
+          P4_k = 1.0 / Kappa_4 * ( P4_k_1 - P4_k_1 * v4_y * v4_y * P4_k_1 / ( 1.0 + v4_y * P4_k_1 * v4_y ) );
+
+          // if ( tan_beta_1_hat == 0.0 ) tan_beta_1_hat = epsilon;
+          // if ( tan_beta_2_hat == 0.0 ) tan_beta_2_hat = epsilon;
+          // if ( tan_beta_3_hat == 0.0 ) tan_beta_3_hat = epsilon;
+          // if ( tan_beta_4_hat == 0.0 ) tan_beta_4_hat = epsilon;
+
+          tan_alpha_1_hat = 1.0 / tan_beta_1_hat;
+          tan_alpha_2_hat = 1.0 / tan_beta_2_hat;
+          tan_alpha_3_hat = 1.0 / tan_beta_3_hat;
+          tan_alpha_4_hat = 1.0 / tan_beta_4_hat;
+
+          alpha_1_hat = atan2f( tan_alpha_1_hat, 1.0 );// Argument Order : ( y, x )
+          alpha_2_hat = atan2f( tan_alpha_2_hat, 1.0 );
+          alpha_3_hat = atan2f( tan_alpha_3_hat, 1.0 );
+          alpha_4_hat = atan2f( tan_alpha_4_hat, 1.0 );
+
+          // if( vy_res < 0.02 ){
+          //   // if( alpha_1_hat < 0.0 ){
+          //   //   alpha_1_hat = pi + alpha_1_hat;
+          //   // }
+          //   // if( alpha_2_hat < 0.0 ){
+          //   //   alpha_2_hat = pi + alpha_2_hat;
+          //   // }
+          //   // if( alpha_3_hat < 0.0 ){
+          //   //   alpha_3_hat = pi + alpha_3_hat;
+          //   // }
+          //   // if( alpha_4_hat < 0.0 ){
+          //   //   alpha_4_hat = pi + alpha_4_hat;
+          //   // }
+          //   alpha_1 = alpha_1_hat;
+          //   alpha_2 = alpha_2_hat;
+          //   alpha_3 = alpha_3_hat;
+          //   alpha_4 = alpha_4_hat;
+          // }
+
+
+        // }
+
 
         // if(isnan(tan_beta_1_hat)) printf("tan_beta_1_hat");
         // if(isnan(P1_k)) printf("P1_k");
