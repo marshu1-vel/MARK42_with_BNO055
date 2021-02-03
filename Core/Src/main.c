@@ -3,15 +3,17 @@
 // #define angular_velocity_control
 #define Enable_DOB
 #define Enable_DFOB
-#define Enable_WOB
-// #define Enable_WOB_FB
-#define Disable_WOB_FB
+// #define Enable_WOB_x
+#define Enable_WOB_y
+// #define Enable_WOB_phi
+#define Enable_WOB_FB
+// #define Disable_WOB_FB
 // #define Enable_PD_controller_av
 // #define Enable_Vehicle_Velocity_control
 // #define Enable_Driving_force_FB
 #define Enable_Driving_Force_Control_Jointspace_Part // This part is common to Driving Force Control and Driving Force Distribution Control
-#define Enable_Driving_Force_Control
-// #define Enable_Driving_Force_Distribution_Control
+// #define Enable_Driving_Force_Control
+#define Enable_Driving_Force_Distribution_Control
 #define Enable_I2C
 // #define Enable_Inertia_Identification
 #define Enable_Inertia_Mass_Matrix_by_Lagrange
@@ -224,6 +226,8 @@ float dphi_cmd = 0.0;
 float vx_res = 0.0;// [m/sec]
 float vy_res = 0.0;
 float dphi_res = 0.0;// [rad/sec]
+
+float vy_res_pre = 0.0;
 
 float x_res = 0.0;// [m]
 float y_res = 0.0;
@@ -472,19 +476,31 @@ float delta_dtheta4_pre = 0.0;
 // float Kp_vv_x   = 5.0;
 // float Kp_vv_y   = 5.0;
 // float Kp_vv_phi = 5.0;
-#define Kp_vv_x 1.75f//5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
-#define Kp_vv_y 1.75f//5.0f
-#define Kp_vv_phi 2.3f//1.75f//5.0f as of 2021/01/17 1.75 -> 2.3
+#define Kp_vv_x 15.0f//1.75f//5.0f // Gain for vehicle velocity control(Based on encoder) 10.0
+#define Kp_vv_y 15.0f//1.75f//5.0f
+#define Kp_vv_phi 9.0f//2.3f//5.0f//2.3f//10.0f//2.3f//1.75f//5.0f as of 2021/01/17 1.75 -> 2.3
 
 float ddx_ref = 0.0;
 float ddy_ref = 0.0;
 float ddphi_ref = 0.0;
 
-#define Kp_df_x 100.0f//0.1f 0.5 10.0 50.0
-#define Kp_df_y 100.0f//0.1f 0.5
+#define Kp_df_x 80.0f//50.0f//80.0f//100.0f//0.1f 0.5 10.0 50.0
+#define Kp_df_y 80.0f//50.0f//80.0f//100.0f//0.1f 0.5
 #define Kp_df_phi 900.0f//10000.0f//0.1f 5.0 100.0(1115-36) : as of 2021/01/16, related to Weighted Jacobi Matrix ( *, / L + W)
 
-#define Kp_df 0.005f//0.005f//5000.0f//1.2f//0.2f
+#define Kd_df_x 10.0f
+#define Kd_df_y 10.0f
+#define Kd_df_phi 10.0f
+
+#define Ki_x 1.0f
+#define Ki_y 0.01f//1.0f
+#define Ki_phi 0.01f//0.05f
+
+float e_integral_x = 0.0;
+float e_integral_y = 0.0;
+float e_integral_phi = 0.0;
+
+#define Kp_df 0.005f//0.01f//0.005f//5000.0f//1.2f//0.2f
 #define Ki_df 0.01f // Ki Gain for driving force control 10.0 0.1 1.0 0.1 0.018
 float fx_ref = 0.0;
 float fy_ref = 0.0;
@@ -782,7 +798,7 @@ float v4_hat_acc = 0.0;
 // * Slip Ratio
 
 // * WOB
-#define G_WOB 50.0f//1.0f//0.01f // [rad/sec]
+#define G_WOB 50.0f//30.0f//20.0f//10.0f//0.01f//1.0f//1.0f//0.01f // [rad/sec]
 
 #ifdef Enable_WOB_FB
 #define WOB_FB 1.0f // 1.0 : With feedback
@@ -799,14 +815,24 @@ float WOB_y_input = 0.0;
 // float WOB_y_input_pre = 0.0;
 // float WOB_phi_input_pre = 0.0;
 
-float Fx_dis = 0.0;// [N]
-float Fy_dis = 0.0;
-float ddphi_dis = 0.0;// [rad/sec^2] For WOB Acceleration Dimension
-float Mz_dis = 0.0;// [Nm] For WOB Force Dimension
+// float Fx_dis = 0.0;// [N]
+// float Fy_dis = 0.0;
+// float Mz_dis = 0.0;// [Nm] For WOB Force Dimension
 
-float Fx_dis_pre = 0.0;
-float Fy_dis_pre = 0.0;
+float ddx_dis = 0.0;// [m/sec^2]
+float ddy_dis = 0.0;
+float ddphi_dis = 0.0;// [rad/sec^2] For WOB Acceleration Dimension
+
+float ddx_dis_pre = 0.0;
+float ddy_dis_pre = 0.0;
 float ddphi_dis_pre = 0.0;
+
+float integral_ddx_dis = 0.0;
+float integral_ddy_dis = 0.0;
+float integral_ddphi_dis = 0.0;
+
+// float Fx_dis_pre = 0.0;
+// float Fy_dis_pre = 0.0;
 // float Mz_dis_pre = 0.0;
 // * WOB
 
@@ -820,7 +846,8 @@ float M_YMO_pre = 0.0;
 
 // * Save variables in SRAM
 #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
-// #define N_SRAM 700
+// #define N_SRAM 1200
+// #define N_SRAM 800
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -964,9 +991,13 @@ float v3_hat_acc_SRAM[N_SRAM] = {};
 float v4_hat_acc_SRAM[N_SRAM] = {};
 #endif
 
-float Fx_dis_SRAM[N_SRAM] = {};
-float Fy_dis_SRAM[N_SRAM] = {};
-float Mz_dis_SRAM[N_SRAM] = {};
+// float Fx_dis_SRAM[N_SRAM] = {};
+// float Fy_dis_SRAM[N_SRAM] = {};
+// float Mz_dis_SRAM[N_SRAM] = {};
+
+float ddx_dis_SRAM[N_SRAM] = {};
+float ddy_dis_SRAM[N_SRAM] = {};
+float ddphi_dis_SRAM[N_SRAM] = {};
 
 float M_YMO_SRAM[N_SRAM] = {};
 
@@ -1401,7 +1432,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         // if( t < t_experiment - 4.0 ){
         //   // vx_cmd = 0.5;
-        //   vy_cmd = 0.5;
+        //   vy_cmd = 0.4;
         //   // dphi_cmd = 1.0;
         // }else{
         //   vx_cmd = 0.0;
@@ -1409,21 +1440,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        if( t < 3.0 ){
-          vy_cmd = 0.5;
-        }else if( t < t_experiment - 9.0 ){
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }else if( t < t_experiment - 6.0 ){
-          vx_cmd = 0.0;
-          vy_cmd = 0.5;
-          dphi_cmd = 0.0;
-        }else if( t < t_experiment - 3.0 ){
-          vx_cmd = 0.0;
-          vy_cmd = 0.0;
-          dphi_cmd = 0.0;
-        }
+        // if( t < 5.0 ){
+        //   // vx_cmd = 0.5;
+        //   vy_cmd = 0.1 * t;
+        //   // dphi_cmd = -0.1;
+        // }else if( t < t_experiment-3.0 ){
+        //   // vx_cmd = 0.0;
+        //   vy_cmd = 0.5;
+        //   // dphi_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
+
+        // if( t < 3.0 ){
+        //   // vy_cmd = 0.5;
+        //   dphi_cmd = 0.4;
+        // }else if( t < t_experiment - 9.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 1.5;
+        // }else if( t < t_experiment - 6.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.3;
+        // }else if( t < t_experiment - 3.0 ){
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
 
         // if( t < 3.0 ){
         //   vy_cmd = 0.5;
@@ -1526,21 +1572,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   r = 0.0;
         // }
 
-        // if( t < 6.0 ){
-        //   r = 0.1 * t;
-        // }else{
-        //   r = 0.6;
-        // }
+        if( t < 6.0 ){
+          r = 0.1 * t;
+        }else{
+          r = 0.6;
+        }
 
-        // if(t < t_experiment - 3.0){
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = r * omega;
-        //   dphi_cmd = omega;
-        // }else{
-        //   vx_cmd   = 0.0;
-        //   vy_cmd   = 0.0;
-        //   dphi_cmd = 0.0;
-        // }
+        if(t < t_experiment - 3.0){
+          vx_cmd   = 0.0;
+          vy_cmd   = r * omega;
+          dphi_cmd = omega;
+        }else{
+          vx_cmd   = 0.0;
+          vy_cmd   = 0.0;
+          dphi_cmd = 0.0;
+        }
 
         // ! --4-- : Sin wave movement without changing posture of vehicle
         // omega = 0.3;// Period T is 2pi / omega
@@ -1759,13 +1805,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 
         #ifdef Enable_Driving_Force_Distribution_Control
-        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
-        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
-        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
+        e_integral_phi += Ki_phi * (dphi_cmd - dphi_res);
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + e_integral_phi;
 
-        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
-        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
-        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + WOB_FB * ddx_dis;
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + WOB_FB * ddy_dis;
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
+
+        fx_ref = Mass * ddx_ref;
+        fy_ref = Mass * ddy_ref;
+        Mz_ref = Jz * ddphi_ref;
+
+        // fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
+        // fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
+        // Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
 
         // v1_x = vx_res - L * yaw_rate;
         // v2_x = vx_res + L * yaw_rate;
@@ -1830,13 +1883,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #endif
 
         #ifdef Enable_Driving_Force_Control
-        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res);
-        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res);
-        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res);
+        // e_integral_x   += Ki_x   * (vx_cmd   -   vx_res);
+        // e_integral_y   += Ki_y   * (vy_cmd   -   vy_res);
+        e_integral_phi += Ki_phi * (dphi_cmd - dphi_res);
+        
+        // ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + e_integral_x;
+        // ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + e_integral_y;
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + e_integral_phi;
 
-        fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
-        fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
-        Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
+        ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + WOB_FB * ddx_dis;
+        ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + WOB_FB * ddy_dis;// - Kd_df_y * vy_res;
+        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
+
+        fx_ref = Mass * ddx_ref;
+        fy_ref = Mass * ddy_ref;
+        Mz_ref = Jz * ddphi_ref;
+
+        // fx_ref = Mass * ddx_ref + WOB_FB * Fx_dis;
+        // fy_ref = Mass * ddy_ref + WOB_FB * Fy_dis;
+        // Mz_ref = Jz * ddphi_ref + WOB_FB * Mz_dis;
 
         // * Jacobi Matrix (T^T)^+ --> Future Work : Weighted Jacobi Matrix
         // fd1_ref = sqrt(2.0) * 1.0 / 4.0 * (   fx_ref + fy_ref - 1.0 / ( L + W ) * Mz_ref );// Cancel Rw term
@@ -1946,9 +2011,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
-        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res) + WOB_FB * Fx_dis / Mass;
-        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res) + WOB_FB * Fy_dis / Mass;
-        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res) + WOB_FB * Mz_dis / Jz;
+        // ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);// + WOB_FB * Fx_dis / Mass;
+        // ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);// + WOB_FB * Fy_dis / Mass;
+        // ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res);// + WOB_FB * Mz_dis / Jz;
+
+        ddx_ref   = Kp_vv_x   * (vx_cmd   -   vx_res);// + WOB_FB * ddx_dis;
+        ddy_ref   = Kp_vv_y   * (vy_cmd   -   vy_res);// + WOB_FB * ddy_dis;
+        ddphi_ref = Kp_vv_phi * (dphi_cmd - dphi_res);// + WOB_FB * ddphi_dis;
 
         ddtheta1_ref =  20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;// [rad/sec^2]
         ddtheta2_ref = -20.0 * ddx_ref + 20.0 * ddy_ref - 6.0 * ddphi_ref;
@@ -2202,32 +2271,49 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #endif
 
-        #ifdef Enable_WOB
-        WOB_x_input   = fx_ref - Mass * Acc_x_correct;
-        WOB_y_input   = fy_ref - Mass * Acc_y_correct;
+        #ifdef Enable_WOB_x
+        // WOB_x_input   = fx_ref - Mass * Acc_x_correct;
+        // WOB_y_input   = fy_ref - Mass * Acc_y_correct;
         // WOB_phi_input = Mz_ref - Jz   * 
         
         // F_x_dis = 1.0 / (2.0 + G_WOB * dt) * ( (2.0 - G_WOB * dt) * F_x_dis_pre + G_WOB * dt * ( WOB_x_input + WOB_x_input_pre ) );// LPF
         // F_y_dis = 1.0 / (2.0 + G_WOB * dt) * ( (2.0 - G_WOB * dt) * F_y_dis_pre + G_WOB * dt * ( WOB_y_input + WOB_y_input_pre ) );// LPF
 
-        Fx_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fx_dis_pre + G_WOB * dt * WOB_x_input );// LPF : Backward Difference
-        Fy_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fy_dis_pre + G_WOB * dt * WOB_y_input );// LPF : Backward Difference
-        ddphi_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddphi_dis_pre + G_WOB * dt * ddphi_ref - G_WOB * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+        // Fx_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fx_dis_pre + G_WOB * dt * WOB_x_input );// LPF : Backward Difference
+        // Fy_dis = 1.0 / (1.0 + G_WOB * dt) * ( Fy_dis_pre + G_WOB * dt * WOB_y_input );// LPF : Backward Difference
+        // ddphi_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddphi_dis_pre + G_WOB * dt * ddphi_ref - G_WOB * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
         // Mz_dis = 1.0 / (1.0 + G_WOB * dt) * ( Mz_dis_pre + G_WOB * dt * Mz_ref - G_WOB * Jz * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
 
-        Fx_dis = - Fx_dis;// Apply + - sign direction to the sign direction of slip ratio observer
-        Fy_dis = - Fy_dis;
-        Mz_dis = - Jz * ddphi_dis;
+        // Fx_dis = - Fx_dis;// Apply + - sign direction to the sign direction of slip ratio observer
+        // Fy_dis = - Fy_dis;
+        // Mz_dis = - Jz * ddphi_dis;
+
+        ddx_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddx_dis_pre + G_WOB * dt * ( ddx_ref - Acc_x_correct ) );// LPF : Backward Difference
+        // ddy_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddy_dis_pre + G_WOB * dt * ddy_ref - G_WOB * ( vy_res - vy_res_pre ) );// LPF + Pseudo Derivative : Backward Difference
+
+        // ddy_dis = integral_ddy_dis - G_WOB * vy_res;
+        // integral_ddy_dis += ( ( ddy_ref + G_WOB * vy_res ) - integral_ddy_dis ) * G_WOB * dt;
 
           // * Save previous values
           // WOB_x_input_pre = WOB_x_input;
           // WOB_y_input_pre = WOB_y_input;
 
-          Fx_dis_pre = Fx_dis;
-          Fy_dis_pre = Fy_dis;
-          ddphi_dis_pre = ddphi_dis;
+          // Fx_dis_pre = Fx_dis;
+          // Fy_dis_pre = Fy_dis;
           // Mz_dis_pre = Mz_dis;
+
+          ddx_dis_pre = ddx_dis;
           // * Save previous values
+        #endif
+
+        #ifdef Enable_WOB_y
+        ddy_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddy_dis_pre + G_WOB * dt * ( ddy_ref - Acc_y_correct ) );// LPF : Backward Difference
+          ddy_dis_pre = ddy_dis;
+        #endif
+
+        #ifdef Enable_WOB_phi
+        ddphi_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddphi_dis_pre + G_WOB * dt * ddphi_ref - G_WOB * ( yaw_rate - yaw_rate_pre ) );// LPF + Pseudo Derivative : Backward Difference
+          ddphi_dis_pre = ddphi_dis;
         #endif
 
         // * YMO ( Yaw Moment Observer )
@@ -2309,6 +2395,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         yaw_rate_pre        = yaw_rate;
         // yaw_rate_notch_pre2 = yaw_rate_notch_pre;
         // yaw_rate_notch_pre  = yaw_rate_notch;
+
+        vy_res_pre = vy_res;
         // * Save previous values
 
         // if(loop % 1000 == 0){
@@ -2479,9 +2567,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           Acc_y_LPF_SRAM[i_save] = Acc_y_LPF;
           d_yawrate_SRAM[i_save] = d_yawrate;
 
-          Fx_dis_SRAM[i_save] = Fx_dis;
-          Fy_dis_SRAM[i_save] = Fy_dis;
-          Mz_dis_SRAM[i_save] = Mz_dis;
+          // Fx_dis_SRAM[i_save] = Fx_dis;
+          // Fy_dis_SRAM[i_save] = Fy_dis;
+          // Mz_dis_SRAM[i_save] = Mz_dis;
+
+          ddx_dis_SRAM[i_save] = ddx_dis;
+          ddy_dis_SRAM[i_save] = ddy_dis;
+          ddphi_dis_SRAM[i_save] = ddphi_dis;
 
           M_YMO_SRAM[i_save] = M_YMO;
 
@@ -2726,9 +2818,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
           printf("%f, ", Acc_y_LPF_SRAM[i_output]);
           printf("%f, ", d_yawrate_SRAM[i_output]);
 
-          printf("%f, ", Fx_dis_SRAM[i_output]);
-          printf("%f, ", Fy_dis_SRAM[i_output]);
-          printf("%f, ", Mz_dis_SRAM[i_output]);
+          // printf("%f, ", Fx_dis_SRAM[i_output]);
+          // printf("%f, ", Fy_dis_SRAM[i_output]);
+          // printf("%f, ", Mz_dis_SRAM[i_output]);
+
+          printf("%f, ", ddx_dis_SRAM[i_output]);
+          printf("%f, ", ddy_dis_SRAM[i_output]);
+          printf("%f, ", ddphi_dis_SRAM[i_output]);
           
           printf("%f, ", M_YMO_SRAM[i_output]);
 
