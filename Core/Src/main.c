@@ -847,7 +847,7 @@ float M_YMO_pre = 0.0;
 // * Save variables in SRAM
 #define N_SRAM 1500 // Sampling Number of variables in SRAM (Number of array) // 3000 // About 50 variables : Up to 2500 sampling -> Set 2200 for safety
 // #define N_SRAM 1200
-// #define N_SRAM 800
+// #define N_SRAM 400
 // float t_experiment = N_SRAM / 100.0;
 #define t_experiment N_SRAM / 100.0f
 
@@ -1440,6 +1440,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   dphi_cmd = 0.0;
         // }
 
+        // if( t < t_experiment ){
+        //   vy_cmd = 0.4;
+        //   // dphi_cmd = 1.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
+        //   dphi_cmd = 0.0;
+        // }
+
         // if( t < 5.0 ){
         //   // vx_cmd = 0.5;
         //   vy_cmd = 0.1 * t;
@@ -1452,6 +1461,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         //   vx_cmd = 0.0;
         //   vy_cmd = 0.0;
         //   dphi_cmd = 0.0;
+        // }
+
+        // if( t < 3.0 ){
+        //   vy_cmd = 0.3;
+        // }else if( t < 6.0 ){
+        //   // vx_cmd = 0.3;
+        //   vy_cmd = 0.0;
+        // }else if( t < 9.0 ){
+        //   // vx_cmd = 0.0;
+        //   vy_cmd = 0.3;
+        // }else if( t < 12.0 ){
+        //   // vx_cmd = -0.3;
+        //   vy_cmd = 0.0;
+        // }else{
+        //   vx_cmd = 0.0;
+        //   vy_cmd = 0.0;
         // }
 
         // if( t < 3.0 ){
@@ -1758,23 +1783,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
           alpha_4_hat = atan2f( tan_alpha_4_hat, 1.0 );
 
           // if( vy_res < 0.02 ){
-          //   // if( alpha_1_hat < 0.0 ){
-          //   //   alpha_1_hat = pi + alpha_1_hat;
-          //   // }
-          //   // if( alpha_2_hat < 0.0 ){
-          //   //   alpha_2_hat = pi + alpha_2_hat;
-          //   // }
-          //   // if( alpha_3_hat < 0.0 ){
-          //   //   alpha_3_hat = pi + alpha_3_hat;
-          //   // }
-          //   // if( alpha_4_hat < 0.0 ){
-          //   //   alpha_4_hat = pi + alpha_4_hat;
-          //   // }
-          //   alpha_1 = alpha_1_hat;
-          //   alpha_2 = alpha_2_hat;
-          //   alpha_3 = alpha_3_hat;
-          //   alpha_4 = alpha_4_hat;
-          // }
+          if( vy_res < 0.1 ){
+            // if( alpha_1_hat < 0.0 ){
+            //   alpha_1_hat = pi + alpha_1_hat;
+            // }
+            // if( alpha_2_hat < 0.0 ){
+            //   alpha_2_hat = pi + alpha_2_hat;
+            // }
+            // if( alpha_3_hat < 0.0 ){
+            //   alpha_3_hat = pi + alpha_3_hat;
+            // }
+            // if( alpha_4_hat < 0.0 ){
+            //   alpha_4_hat = pi + alpha_4_hat;
+            // }
+            alpha_1 = alpha_1_hat;
+            alpha_2 = alpha_2_hat;
+            alpha_3 = alpha_3_hat;
+            alpha_4 = alpha_4_hat;
+          }
 
 
         // }
@@ -1810,7 +1836,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + WOB_FB * ddx_dis;
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + WOB_FB * ddy_dis;
-        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
+        // ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
 
         fx_ref = Mass * ddx_ref;
         fy_ref = Mass * ddy_ref;
@@ -1885,15 +1911,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
         #ifdef Enable_Driving_Force_Control
         // e_integral_x   += Ki_x   * (vx_cmd   -   vx_res);
         // e_integral_y   += Ki_y   * (vy_cmd   -   vy_res);
-        e_integral_phi += Ki_phi * (dphi_cmd - dphi_res);
         
         // ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + e_integral_x;
         // ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + e_integral_y;
+
+        e_integral_phi += Ki_phi * (dphi_cmd - dphi_res);
         ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + e_integral_phi;
 
         ddx_ref   = Kp_df_x   * (vx_cmd   -   vx_res) + WOB_FB * ddx_dis;
         ddy_ref   = Kp_df_y   * (vy_cmd   -   vy_res) + WOB_FB * ddy_dis;// - Kd_df_y * vy_res;
-        ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
+        // ddphi_ref = Kp_df_phi * (dphi_cmd - dphi_res) + WOB_FB * ddphi_dis;
 
         fx_ref = Mass * ddx_ref;
         fy_ref = Mass * ddy_ref;
@@ -2308,6 +2335,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
         #ifdef Enable_WOB_y
         ddy_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddy_dis_pre + G_WOB * dt * ( ddy_ref - Acc_y_correct ) );// LPF : Backward Difference
+        // ddy_dis = 1.0 / (1.0 + G_WOB * dt) * ( ddy_dis_pre + G_WOB * dt * ddy_ref - G_WOB * ( vy_res - vy_res_pre ) );// LPF + Pseudo Derivative : Backward Difference
           ddy_dis_pre = ddy_dis;
         #endif
 
